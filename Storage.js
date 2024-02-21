@@ -1,17 +1,16 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import 'react-native-get-random-values';
-import {v4 as uuidv4} from 'uuid';
 
 export const loadData = async () => {
     try {
-      const data = [];
-      const keys = await AsyncStorage.getAllKeys();
-      if (keys.length != 0) { 
-        for (const key of keys) {
-          const val = await AsyncStorage.getItem(key);
-          data.push(JSON.parse(val)); 
-        }
+      const stringData = await AsyncStorage.getItem("songs");
+      let data = JSON.parse(stringData);
+      console.log(data);
+      if (data != null) { 
         console.log("Previously Stored Data :", data.map(obj => obj.name));
+      }
+      else {
+        data = []; 
+        //data is null instead of [] and in the store method and others, I use array properties in conditions
       }
       return data;
     } catch (error) {
@@ -25,14 +24,16 @@ export const storeData = async (files) => {
       data = await loadData();
 
       if (files.assets != null){
+        toBeStored = [];
         for (const file of files.assets) {
           if (data.some(obj => obj.name === file.name && obj.size === file.size)){
             continue;
           }
-          const guid = uuidv4();
-          console.log(guid);
-          await AsyncStorage.setItem(guid, JSON.stringify(file));
+          toBeStored.push(file)
+          console.log(file.name, "Has been added to the store queue!");
         }
+        data = data.concat(toBeStored);
+        await AsyncStorage.setItem("songs", JSON.stringify(data));
       }
     } catch (error) {
       console.log("Error storing files", error);
