@@ -1,9 +1,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import AudioHandler from "./AudioHandler";
 
 export default class Storage {
   
   constructor() {
-    this.songs = this.loadSongs();
+    try {
+
+      this.AudioHandler = new AudioHandler();
+      this.songs = this.loadSongs();
+      
+
+    } catch (error) {
+      console.log("Eror Initializing Storage:", error);
+    }
   }
 
   loadSongs = async () => {
@@ -18,8 +27,13 @@ export default class Storage {
         data = []; 
         //data is null instead of [] and in the store method and others, I use array properties in conditions
       }
+
       this.songs = data;
+      this.AudioHandler.songList = await this.AudioHandler.createSongObjectsFromMetaData(data);
+      this.AudioHandler.curSong = this.AudioHandler.songList[this.AudioHandler.curIndex]; //clean this up with a AH async init method?
+      
       return data;
+      
     } catch (error) {
       console.log("Error loading data", error);
     }

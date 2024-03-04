@@ -3,9 +3,11 @@ import React from 'react';
 import { Button, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import * as DocumentPicker from "expo-document-picker";
 import Storage from "./Storage";
+import AudioHandler from './AudioHandler';
 
 export default function App() {
 
+  //const AH = new AudioHandler();
   const DB = new Storage();
   
 
@@ -41,9 +43,22 @@ export default function App() {
       <TouchableOpacity onPress={DB.clearStorage} style={{padding: 10, shadowOpacity: .5, shadowOffset: [0,0], backgroundColor: '#c21d1d', shadowColor : '#c21d1d', marginTop: 10}}>
         <Text style= {{color : '#ffffff'}}>Clear Storage</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => console.log(DB.songs)} style={{padding: 10, shadowOpacity: .5, shadowOffset: [0,0], backgroundColor: '#000000', shadowColor : '#000000', marginTop: 10, marginRight: 100}}>
-        <Text style= {{color : '#ffffff'}}>Play Sound</Text>
-      </TouchableOpacity>
+
+      <View style={{ flexDirection: 'row' }}>
+        <TouchableOpacity onPress={DB.AudioHandler.play} style={{padding: 10, shadowOpacity: .5, shadowOffset: [0,0], backgroundColor: '#000000', shadowColor : '#000000', marginTop: 10, marginRight: 10}}>
+          <Text style= {{color : '#ffffff'}}>Play Sound</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={DB.AudioHandler.pause} style={{padding: 10, shadowOpacity: .5, shadowOffset: [0,0], backgroundColor: '#000000', shadowColor : '#000000', marginTop: 10, marginRight: 10}}>
+          <Text style= {{color : '#ffffff'}}>Pause Sound</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={DB.AudioHandler.prev} style={{padding: 10, shadowOpacity: .5, shadowOffset: [0,0], backgroundColor: '#000000', shadowColor : '#000000', marginTop: 10, marginRight: 10}}>
+          <Text style= {{color : '#ffffff'}}>Previous</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={DB.AudioHandler.next} style={{padding: 10, shadowOpacity: .5, shadowOffset: [0,0], backgroundColor: '#000000', shadowColor : '#000000', marginTop: 10, marginRight: 10}}>
+          <Text style= {{color : '#ffffff'}}>Next</Text>
+        </TouchableOpacity>
+      </View>
+
     </View>
   );
 }
