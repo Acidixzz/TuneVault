@@ -29,11 +29,10 @@ export default class Storage {
       }
 
       this.songs = data;
-      this.AudioHandler.songList = await this.AudioHandler.createSongObjectsFromMetaData(data);
-      this.AudioHandler.curSong = this.AudioHandler.songList[this.AudioHandler.curIndex]; //clean this up with a AH async init method?
+      await this.AudioHandler.getNewSongList(data); 
       
       return data;
-      
+
     } catch (error) {
       console.log("Error loading data", error);
     }
@@ -55,6 +54,7 @@ export default class Storage {
         }
         data = data.concat(toBeStored);
         this.songs = data;
+        await this.AudioHandler.getNewSongList(data);
         await AsyncStorage.setItem("songs", JSON.stringify(data));
       }
     } catch (error) {
@@ -65,6 +65,8 @@ export default class Storage {
   clearStorage = async () => {
     try {
         this.songs = [];
+        await this.AudioHandler.curSong.unloadAsync();
+        this.AudioHandler.songList = [];
         await AsyncStorage.clear();
         console.log("Storage has been cleared.");
     } catch (error) {

@@ -19,9 +19,21 @@ export default class AudioHandler {
         await Audio.setAudioModeAsync({ playsInSilentModeIOS: true, staysActiveInBackground: true });
     }
 
-    createSongObjectsFromMetaData = async (metaData) => {
+    getNewSongList = async (metaData) => {
         try {
             
+            this.songList = await this.createSongObjectsFromMetaData(metaData);
+            this.curIndex = 0;
+            this.curSong = this.songList[this.curIndex];
+
+        } catch (error) {
+            console.log("Error getting new song list:", error);
+        }
+    }
+
+    createSongObjectsFromMetaData = async (metaData) => {
+        try {
+            //eventually make it only create playbackObjects for songs not already in this.songList
             const songList = [];
             for (const song of metaData) {
                 const {sound: playbackObject} = await Audio.Sound.createAsync(

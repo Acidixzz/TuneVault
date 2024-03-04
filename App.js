@@ -1,9 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { Button, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Pressable } from 'react-native';
+import Icon from 'react-native-ico-material-design';
 import * as DocumentPicker from "expo-document-picker";
 import Storage from "./Storage";
-import AudioHandler from './AudioHandler';
 
 export default function App() {
 
