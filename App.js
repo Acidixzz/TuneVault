@@ -2,13 +2,16 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { Button, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import * as DocumentPicker from "expo-document-picker";
-import {storeData, clearStorage} from "./Storage";
-
+import Storage from "./Storage";
 
 export default function App() {
+
+  const DB = new Storage();
   
-  const pickMultipleDocuments = async () => {
+
+  const pickMultipleSongs = async () => {
     try {
+
       const results = await DocumentPicker.getDocumentAsync({
         multiple : true,
         type : "audio/*"
@@ -16,7 +19,7 @@ export default function App() {
 
       console.log(results);
 
-      storeData(results);
+      await DB.storeSongs(results);
 
       // Handle the selected documents
     } catch (error) {
@@ -28,15 +31,18 @@ export default function App() {
     }
   };
 
-  
+
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <TouchableOpacity onPress={pickMultipleDocuments} style={{padding: 10, shadowOpacity: .5, shadowOffset: [0,0], backgroundColor: '#17b6ff', shadowColor : '#17b6ff'}}>
-        <Text style= {{color : '#ffffff'}}>Pick Multiple Documents</Text>
+      <TouchableOpacity onPress={pickMultipleSongs} style={{padding: 10, shadowOpacity: .5, shadowOffset: [0,0], backgroundColor: '#17b6ff', shadowColor : '#17b6ff'}}>
+        <Text style= {{color : '#ffffff'}}>Pick Multiple Songs</Text> 
       </TouchableOpacity>
-      <TouchableOpacity onPress={clearStorage} style={{padding: 10, shadowOpacity: .5, shadowOffset: [0,0], backgroundColor: '#c21d1d', shadowColor : '#c21d1d', marginTop: 10}}>
+      <TouchableOpacity onPress={DB.clearStorage} style={{padding: 10, shadowOpacity: .5, shadowOffset: [0,0], backgroundColor: '#c21d1d', shadowColor : '#c21d1d', marginTop: 10}}>
         <Text style= {{color : '#ffffff'}}>Clear Storage</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => console.log(DB.songs)} style={{padding: 10, shadowOpacity: .5, shadowOffset: [0,0], backgroundColor: '#000000', shadowColor : '#000000', marginTop: 10, marginRight: 100}}>
+        <Text style= {{color : '#ffffff'}}>Play Sound</Text>
       </TouchableOpacity>
     </View>
   );

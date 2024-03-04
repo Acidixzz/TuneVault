@@ -20,7 +20,8 @@
     "react-native-document-picker": "^8.0.0",
     "react-native-get-random-values": "^1.10.0",
     "react-native-web": "~0.19.6",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "expo-av": "~13.4.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

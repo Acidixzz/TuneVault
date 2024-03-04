@@ -1,6 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const loadData = async () => {
+export default class Storage {
+  
+  constructor() {
+    this.songs = this.loadSongs();
+  }
+
+  loadSongs = async () => {
     try {
       const stringData = await AsyncStorage.getItem("songs");
       let data = JSON.parse(stringData);
@@ -12,16 +18,17 @@ export const loadData = async () => {
         data = []; 
         //data is null instead of [] and in the store method and others, I use array properties in conditions
       }
+      this.songs = data;
       return data;
     } catch (error) {
       console.log("Error loading data", error);
     }
-}
+  }
 
-export const storeData = async (files) => {
+  storeSongs = async (files) => {
     try {
 
-      data = await loadData();
+      data = await this.loadSongs();
 
       if (files.assets != null){
         toBeStored = [];
@@ -29,22 +36,25 @@ export const storeData = async (files) => {
           if (data.some(obj => obj.name === file.name && obj.size === file.size)){
             continue;
           }
-          toBeStored.push(file)
+          toBeStored.push(file);
           console.log(file.name, "Has been added to the store queue!");
         }
         data = data.concat(toBeStored);
+        this.songs = data;
         await AsyncStorage.setItem("songs", JSON.stringify(data));
       }
     } catch (error) {
       console.log("Error storing files", error);
     }
-}
-  
-export const clearStorage = async () => {
+  }
+    
+  clearStorage = async () => {
     try {
+        this.songs = [];
         await AsyncStorage.clear();
         console.log("Storage has been cleared.");
     } catch (error) {
         console.log("Error clearing storage:", error);
     }
+  }
 }
