@@ -30,7 +30,7 @@ export default class Storage {
 
       this.songs = data;
       await this.AudioHandler.getNewSongList(data); 
-      
+
       return data;
 
     } catch (error) {
@@ -65,7 +65,9 @@ export default class Storage {
   clearStorage = async () => {
     try {
         this.songs = [];
-        await this.AudioHandler.curSong.unloadAsync();
+        if (this.AudioHandler.curSong) {
+          await this.AudioHandler.curSong.unloadAsync();
+        }
         this.AudioHandler.songList = [];
         await AsyncStorage.clear();
         console.log("Storage has been cleared.");

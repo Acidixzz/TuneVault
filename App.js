@@ -5,11 +5,15 @@ import Icon from 'react-native-ico-material-design';
 import * as DocumentPicker from "expo-document-picker";
 import Storage from "./Storage";
 
+iconWidth = 26;
+iconHeight = 26;
+
 export default function App() {
 
   //const AH = new AudioHandler();
   const DB = new Storage();
   
+  //function for permissions
 
   const pickMultipleSongs = async () => {
     try {
@@ -59,6 +63,23 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.NavContainer}>
+        <View style={styles.NavBar}>
+          <Pressable onPress={() => console.log("first")} style={styles.IconBehave}>
+            <Icon name='bookmark-ribbon' height={iconHeight} width={iconWidth} color='#000000'/>
+          </Pressable>
+
+          <Pressable onPress={() => console.log("second")} style={styles.IconBehave}>
+            <Icon name='add-plus-button' height={iconHeight} width={iconWidth} color='#000000'/>
+          </Pressable>
+
+
+          <Pressable onPress={() => console.log("third")} style={styles.IconBehave}>
+            <Icon name='settings-cogwheel-button' height={iconHeight} width={iconWidth} color='#000000'/>
+          </Pressable>
+        </View>
+      </View>
+
     </View>
   );
 }
@@ -70,4 +91,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  NavContainer: {
+    position: 'absolute',
+    alignItems: 'center',
+    bottom: 0,
+  },
+
+  NavBar: {
+    flexDirection: 'row',
+    backgroundColor: '#eee',
+    width: '100%',
+    justifyContent: 'space-evenly',
+    height: 80,
+  },
+
+  IconBehave: {
+    padding: 20
+  }
 });
