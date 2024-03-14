@@ -4,6 +4,8 @@ import { StyleSheet, Text, View, TouchableOpacity, Pressable } from 'react-nativ
 import Icon from 'react-native-ico-material-design';
 import * as DocumentPicker from "expo-document-picker";
 import Storage from "./Storage";
+import * as MediaLibrary from "expo-media-library";
+import { Library, Songs, Settings } from './screens';
 
 iconWidth = 26;
 iconHeight = 26;
@@ -18,9 +20,17 @@ export default function App() {
   const pickMultipleSongs = async () => {
     try {
 
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+
+      if (status !== "granted"){
+        alert("Permission to access audio files denied!");
+        return;
+      }
+
       const results = await DocumentPicker.getDocumentAsync({
         multiple : true,
-        type : "audio/*"
+        type : "audio/*",
+        copyToCacheDirectory : false
       });
 
       console.log(results);

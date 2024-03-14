@@ -24,7 +24,9 @@ export default class AudioHandler {
             
             this.songList = await this.createSongObjectsFromMetaData(metaData);
             this.curIndex = 0;
-            this.curSong = this.songList[this.curIndex];
+            if (this.curSong === null){
+                this.curSong = this.songList[this.curIndex];
+            }
 
         } catch (error) {
             console.log("Error getting new song list:", error);
@@ -74,7 +76,7 @@ export default class AudioHandler {
         try {
             
             await this.curSong.stopAsync();
-            if (this.curIndex < this.songList.length-1) {
+            if (this.curIndex < this.songList.length-1 && this.songList.includes(this.curSong)) {
                 this.curIndex++;
             }
             else {
@@ -92,7 +94,7 @@ export default class AudioHandler {
         try {
             
             await this.curSong.stopAsync();
-            if (this.curIndex > 0) {
+            if (this.curIndex > 0 && this.songList.includes(this.curSong)) {
                 this.curIndex--;
             }
             else {
