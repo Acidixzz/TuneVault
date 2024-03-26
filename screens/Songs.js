@@ -14,6 +14,10 @@ export default function Songs() {
   async function getAllSongs() {
     setAllSongs(await DB.loadSongs());
   }
+
+  useEffect(() => {
+    getAllSongs();
+  }, []);
   
   const pickMultipleSongs = async () => {
     try {
@@ -84,7 +88,7 @@ export default function Songs() {
         </TouchableOpacity> */}
             
       <FlatList
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
         data={allSongs} 
         renderItem={({item}) => (
           <SongComponent item={item}/>
