@@ -1,14 +1,17 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import AudioHandler from "./AudioHandler";
 
+//Async Storage Keys
+const SONGS = "songs";
+
 export default class Storage {
   
+
   constructor() {
     try {
 
       this.AudioHandler = new AudioHandler();
       this.songs = this.loadSongs();
-      
 
     } catch (error) {
       console.log("Eror Initializing Storage:", error);
@@ -17,7 +20,7 @@ export default class Storage {
 
   loadSongs = async () => {
     try {
-      const stringData = await AsyncStorage.getItem("songs");
+      const stringData = await AsyncStorage.getItem(SONGS);
       let data = JSON.parse(stringData);
       console.log(data);
       if (data != null) { 
@@ -28,9 +31,9 @@ export default class Storage {
         //data is null instead of [] and in the store method and others, I use array properties in conditions
       }
 
-      this.songs = data;
       await this.AudioHandler.getNewSongList(data); 
 
+      //so useEffect isn't called infinitely when trying to render song components
       return data;
 
     } catch (error) {
@@ -53,9 +56,8 @@ export default class Storage {
           console.log(file.name, "Has been added to the store queue!");
         }
         data = data.concat(toBeStored);
-        this.songs = data;
-        await this.AudioHandler.getNewSongList(data);
-        await AsyncStorage.setItem("songs", JSON.stringify(data));
+        await AsyncStorage.setItem(SONGS, JSON.stringify(data));
+        this.songs = await this.loadSongs();
       }
     } catch (error) {
       console.log("Error storing files", error);
@@ -69,7 +71,7 @@ export default class Storage {
           await this.AudioHandler.curSong.unloadAsync();
         }
         this.AudioHandler.songList = [];
-        await AsyncStorage.clear();
+        await AsyncStorage.removeItem(SONGS);
         console.log("Storage has been cleared.");
     } catch (error) {
         console.log("Error clearing storage:", error);

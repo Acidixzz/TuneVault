@@ -23,8 +23,9 @@ export default class AudioHandler {
         try {
             
             this.songList = await this.createSongObjectsFromMetaData(metaData);
+            //console.log(this.songList);
             this.curIndex = 0;
-            if (this.curSong === null){
+            if (this.curSong === null || this.curSong === undefined){
                 this.curSong = this.songList[this.curIndex];
             }
 
@@ -42,8 +43,10 @@ export default class AudioHandler {
                     { uri: song.uri },
                     { shouldPlay: false }
                 );
+                //console.log("creating sound obj:", playbackObject);
                 songList.push(playbackObject);
             }
+            //console.log(songList);
             return songList;
 
         } catch (error) {
