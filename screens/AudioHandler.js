@@ -84,10 +84,12 @@ export default class AudioHandler {
 
     setCurNextPrev = async (cur, songs) => {
         try {
+            if (this.cur && this.curRow === cur){
+                return;
+            }
             if (this.cur){
                 await this.cur.stopAsync();
             }
-
             let curIndex = await songs.findIndex(item => item.SONG_GU === cur.SONG_GU);
             this.prevRow = await songs[curIndex > 0 ? curIndex-1 : songs.length-1];
             this.curRow = cur;
