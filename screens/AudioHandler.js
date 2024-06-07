@@ -2,10 +2,12 @@ import { Audio } from "expo-av";
 
 export default class AudioHandler {
 
-    constructor () {
+    constructor (songs) {
         try {
             Audio.setAudioModeAsync({ playsInSilentModeIOS: true, staysActiveInBackground: true });
-            this.cur = null;
+            this.songs = songs;
+
+            this._cur = null;
             this.prev = null;
             this.next = null;
 
@@ -17,6 +19,23 @@ export default class AudioHandler {
             console.log("Error initializing AudioHandler: ", error);
         }
     }
+
+    get cur() {
+        return this._cur;
+    }
+
+    set cur(value) {
+        if (this._cur !== value) {
+            this._cur = value;
+            this._cur?.setOnPlaybackStatusUpdate(this.OnPlaybackStatusUpdate);
+        }
+    }
+
+    OnPlaybackStatusUpdate = status => {
+        if (status.didJustFinish) {
+          this.playNext(this.songs);
+        }
+      }
 
     play = async () => {
         try {
@@ -37,6 +56,7 @@ export default class AudioHandler {
     playPrev = async (songs) => {
         try {
             await this.cur.stopAsync();
+            this.songs = songs;
             this.next = this.cur;
             this.cur = this.prev;
 
@@ -61,6 +81,7 @@ export default class AudioHandler {
     playNext = async (songs) => {
         try {
             await this.cur.stopAsync();
+            this.songs = songs;
             this.prev = this.cur;
             this.cur = this.next;
 
@@ -87,7 +108,7 @@ export default class AudioHandler {
             if (this.cur && this.curRow === cur){
                 return;
             }
-            if (this.cur){
+            else if (this.cur) {
                 await this.cur.stopAsync();
             }
             let curIndex = await songs.findIndex(item => item.SONG_GU === cur.SONG_GU);
@@ -112,7 +133,6 @@ export default class AudioHandler {
                 { shouldPlay: false }
             );
             this.next = nextSong;
-
             await this.cur.playAsync();
         } catch (error) {
             console.log("Error setting cur, next, and prev: ", error);

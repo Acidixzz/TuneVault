@@ -26,9 +26,8 @@ export default function Songs() {
       const SELECT = await txn.getAllAsync('SELECT * FROM songs');
       setSongs(SELECT);
       //console.log(query);
+      setAh(new AudioHandler(SELECT));
     });
-
-    setAh(new AudioHandler());
   }, []);
 
   const pickMultipleSongs = async () => {
