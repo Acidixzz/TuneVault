@@ -30,7 +30,6 @@
     "react-native-get-random-values": "~1.11.0",
     "react-native-ico-material-design": "^5.1.2",
     "react-native-svg": "15.2.0",
-    "react-native-track-player": "^4.1.1",
     "react-native-web": "~0.19.6",
     "uuid": "^9.0.1"
   },
