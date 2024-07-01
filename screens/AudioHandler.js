@@ -2,9 +2,12 @@ import { Audio } from "expo-av";
 
 export default class AudioHandler {
 
-    constructor (songs) {
+    constructor(songs) {
         try {
-            Audio.setAudioModeAsync({ playsInSilentModeIOS: true, staysActiveInBackground: true });
+            const loadAudio = async () => {
+                await Audio.setAudioModeAsync({ playsInSilentModeIOS: true, staysActiveInBackground: true });
+            }
+            loadAudio();
             this.songs = songs;
 
             this._cur = null;
@@ -33,9 +36,9 @@ export default class AudioHandler {
 
     OnPlaybackStatusUpdate = status => {
         if (status.didJustFinish) {
-          this.playNext(this.songs);
+            this.playNext(this.songs);
         }
-      }
+    }
 
     play = async () => {
         try {
@@ -57,6 +60,7 @@ export default class AudioHandler {
         try {
             await this.cur.stopAsync();
             this.songs = songs;
+            await this.next.unloadAsync();
             this.next = this.cur;
             this.cur = this.prev;
 
@@ -66,9 +70,9 @@ export default class AudioHandler {
             await this.cur.playAsync();
 
             let curIndex = await songs.findIndex(item => item.SONG_GU === this.curRow.SONG_GU);
-            this.prevRow = await songs[curIndex > 0 ? curIndex-1 : songs.length-1];
+            this.prevRow = await songs[curIndex > 0 ? curIndex - 1 : songs.length - 1];
 
-            const {sound: prevSong} = await Audio.Sound.createAsync(
+            const { sound: prevSong } = await Audio.Sound.createAsync(
                 { uri: this.prevRow.FILE_PATH },
                 { shouldPlay: false }
             );
@@ -82,6 +86,7 @@ export default class AudioHandler {
         try {
             await this.cur.stopAsync();
             this.songs = songs;
+            await this.prev.unloadAsync();
             this.prev = this.cur;
             this.cur = this.next;
 
@@ -91,9 +96,9 @@ export default class AudioHandler {
             await this.cur.playAsync();
 
             let curIndex = await songs.findIndex(item => item.SONG_GU === this.curRow.SONG_GU);
-            this.nextRow = await songs[curIndex < songs.length-1 ? curIndex+1 : 0];
+            this.nextRow = await songs[curIndex < songs.length - 1 ? curIndex + 1 : 0];
 
-            const {sound: nextSong} = await Audio.Sound.createAsync(
+            const { sound: nextSong } = await Audio.Sound.createAsync(
                 { uri: this.nextRow.FILE_PATH },
                 { shouldPlay: false }
             );
@@ -105,30 +110,37 @@ export default class AudioHandler {
 
     setCurNextPrev = async (cur, songs) => {
         try {
-            if (this.cur && this.curRow === cur){
+            if (this.cur && this.curRow === cur) {
                 return;
             }
             else if (this.cur) {
                 await this.cur.stopAsync();
+                await this.cur.unloadAsync();
+                if (this.next) {
+                    await this.next.unloadAsync();
+                }
+                if (this.prev) {
+                    await this.prev.unloadAsync();
+                }
             }
             let curIndex = await songs.findIndex(item => item.SONG_GU === cur.SONG_GU);
-            this.prevRow = await songs[curIndex > 0 ? curIndex-1 : songs.length-1];
+            this.prevRow = await songs[curIndex > 0 ? curIndex - 1 : songs.length - 1];
             this.curRow = cur;
-            this.nextRow = await songs[curIndex < songs.length-1 ? curIndex+1 : 0];
+            this.nextRow = await songs[curIndex < songs.length - 1 ? curIndex + 1 : 0];
 
-            const {sound: curSong} = await Audio.Sound.createAsync(
+            const { sound: curSong } = await Audio.Sound.createAsync(
                 { uri: cur.FILE_PATH },
                 { shouldPlay: false }
             );
             this.cur = curSong;
-            
-            const {sound: prevSong} = await Audio.Sound.createAsync(
+
+            const { sound: prevSong } = await Audio.Sound.createAsync(
                 { uri: this.prevRow.FILE_PATH },
                 { shouldPlay: false }
             );
             this.prev = prevSong;
 
-            const {sound: nextSong} = await Audio.Sound.createAsync(
+            const { sound: nextSong } = await Audio.Sound.createAsync(
                 { uri: this.nextRow.FILE_PATH },
                 { shouldPlay: false }
             );

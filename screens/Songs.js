@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Alert, StyleSheet, Text, View, TouchableOpacity, Pressable, FlatList, FlatListComponent, VirtualizedList } from 'react-native';
+import { Modal, Alert, StyleSheet, Text, View, TouchableOpacity, Pressable, FlatList, SafeAreaView, TouchableWithoutFeedback } from 'react-native';
 import * as DocumentPicker from "expo-document-picker";
 import * as MediaLibrary from "expo-media-library";
 import SongComponent from './components/SongComponent';
 import { Ionicons, createIconSetFromFontello } from '@expo/vector-icons';
 import * as SQLite from 'expo-sqlite';
 import AudioHandler from './AudioHandler';
+import { Audio } from "expo-av";
+import * as FileSystem from 'expo-file-system';
+
 
 export default function Songs() {
   const db = SQLite.openDatabaseSync('TuneVault.db');
@@ -18,10 +21,11 @@ export default function Songs() {
   const [curSongForSettings, setCurSongForSettings] = useState(null);
 
   useEffect(() => {
-    db.withExclusiveTransactionAsync(async (txn) =>{
+
+    db.withExclusiveTransactionAsync(async (txn) => {
       await txn.execAsync('CREATE TABLE IF NOT EXISTS songs (SONG_GU TEXT PRIMARY KEY, NAME TEXT NOT NULL, ARTIST TEXT, FILE_PATH TEXT NOT NULL, PICTURE BLOB, DATE_ADDED TEXT NOT NULL)');
     });
-    
+
     db.withExclusiveTransactionAsync(async (txn) => {
       const SELECT = await txn.getAllAsync('SELECT * FROM songs');
       setSongs(SELECT);
@@ -35,15 +39,15 @@ export default function Songs() {
 
       const { status } = await MediaLibrary.requestPermissionsAsync();
 
-      if (status !== "granted"){
+      if (status !== "granted") {
         alert("Permission to access audio files denied!");
         return;
       }
 
       const results = await DocumentPicker.getDocumentAsync({
-        multiple : true,
-        type : "audio/*",
-        copyToCacheDirectory : false
+        multiple: true,
+        type: "audio/*",
+        copyToCacheDirectory: false,
       });
 
       console.log(results);
@@ -66,12 +70,14 @@ export default function Songs() {
       if (files.assets != null) {
         let query = 'INSERT INTO songs (SONG_GU, NAME, ARTIST, FILE_PATH, DATE_ADDED) VALUES ';
         let index = 0
-        for (const file of files.assets){
-          query+= `(${Array(5).fill('?').join(', ')})`;
-          if (index < files.assets.length - 1){
-            query+= ', ';
+        for (const file of files.assets) {
+          query += `(${Array(5).fill('?').join(', ')})`;
+          if (index < files.assets.length - 1) {
+            query += ', ';
           }
-          values.push(...[generateRandomGUID(), file.name, 'Juice WRLD', file.uri, new Date().toISOString()]);
+          let gu = generateRandomGUID();
+          await FileSystem.copyAsync({ from: file.uri, to: FileSystem.documentDirectory + gu + file.name });
+          values.push(...[gu, file.name, 'Juice WRLD', FileSystem.documentDirectory + gu + file.name, new Date().toISOString()]);
           index++;
         }
 
@@ -91,10 +97,11 @@ export default function Songs() {
     }
   }
 
-  const deleteRows = async (guid) => {
+  const deleteRows = async (name, guid) => {
     try {
       db.withExclusiveTransactionAsync(async (txn) => {
         await txn.runAsync('DELETE FROM songs WHERE SONG_GU == ?', guid);
+        await FileSystem.deleteAsync(FileSystem.documentDirectory + guid + name);
 
         const SELECT = await txn.getAllAsync('SELECT * FROM songs');
         setSongs(SELECT);
@@ -136,14 +143,14 @@ export default function Songs() {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'flex-start', marginTop: 100 }}>
-      
-      <View style={{justifyContent: 'center', alignItems: 'center', marginEnd: 'auto', marginStart: 'auto'}}>
+    <SafeAreaView style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'flex-start', backgroundColor: '#171717' }}>
+
+      <View style={{ justifyContent: 'center', alignItems: 'center', marginEnd: 'auto', marginStart: 'auto' }}>
         <TouchableOpacity onPress={pickMultipleSongs} style={styles.touchable}>
-          <Text style={styles.textStyle}>Pick Multiple Songs</Text> 
+          <Text style={styles.textStyle}>Pick Multiple Songs</Text>
         </TouchableOpacity>
 
-        <View style={{ margin:20, flexDirection: 'row' }}>
+        <View style={{ margin: 20, flexDirection: 'row' }}>
           {/*play, pause, next, prev*/}
           <TouchableOpacity style={styles.touchableRow} onPress={ah?.play}>
             <Text style={styles.textStyle}>Play</Text>
@@ -151,45 +158,43 @@ export default function Songs() {
           <TouchableOpacity style={styles.touchableRow} onPress={ah?.pause}>
             <Text style={styles.textStyle}>Pause</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.touchableRow} onPress={() => {ah?.playNext(songs)}}>
+          <TouchableOpacity style={styles.touchableRow} onPress={() => { ah?.playNext(songs) }}>
             <Text style={styles.textStyle}>Next</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.touchableRow} onPress={() => {ah?.playPrev(songs)}}>
+          <TouchableOpacity style={styles.touchableRow} onPress={() => { ah?.playPrev(songs) }}>
             <Text style={styles.textStyle}>Prev</Text>
           </TouchableOpacity>
-        </View>  
+        </View>
       </View>
-            
-      <FlatList style= {{start: '5%', marginTop: 20, width: '90%'}}
+
+      <FlatList style={{ marginTop: 20, width: '100%' }}
         showsVerticalScrollIndicator={true}
-        data={songs} 
-        renderItem={({item}) => (
-          <View>
+        data={songs}
+        renderItem={({ item, index }) => (
+          <View key={index}>
             <Modal animationType='slide' transparent={true} visible={songSettingsVisible}>
-              <View style={styles.centeredView}>
-                <View style={[styles.modalView]}>
-                  <Text style={styles.modalText}>Settings for {curSongForSettings?.NAME}</Text>
-                  <Pressable style={[styles.button, styles.buttonColor]} onPress={() => deleteRows(curSongForSettings?.SONG_GU)}>
+              <View>
+                <TouchableOpacity style={{ height: '50%' }} onPress={() => setSongSettingsVisible(!songSettingsVisible)} />
+                <View style={styles.modalView}>
+                  <SongComponent item={curSongForSettings}></SongComponent>
+                  <View style={{ borderBottomColor: '#666666', borderBottomWidth: .25, width: 400, marginTop: '3.05%' }}></View>
+                  <TouchableOpacity style={[styles.button, styles.buttonColor]} onPress={() => deleteRows(curSongForSettings?.NAME, curSongForSettings?.SONG_GU)}>
                     <Text style={styles.textStyle}>Remove</Text>
-                  </Pressable>
-                  <Pressable style={[styles.button, styles.buttonColor]} onPress={() => setSongSettingsVisible(!songSettingsVisible)}>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.button, styles.buttonColor]} onPress={() => setSongSettingsVisible(!songSettingsVisible)}>
                     <Text style={styles.textStyle}>Close</Text>
-                  </Pressable>
+                  </TouchableOpacity>
                 </View>
               </View>
             </Modal>
 
-            <View flexDirection='row'>
-              <SongComponent item={item} ah={ah} songs={songs}/>
-              <Pressable onPress={() => {settingsPopup(item)}}>
-                <Ionicons style={{marginTop: 18}} name="ellipsis-horizontal-sharp" size={24} color="black" />
-              </Pressable>
+            <View style={{ flexDirection: 'row' }}>
+              <SongComponent item={item} ah={ah} songs={songs} showEllipsis={true} settingFunc={settingsPopup} />
             </View>
-            <View style= {{height: 1, width: '100%', backgroundColor: '#808080', marginTop: 5}}/>
           </View>
         )}
-        /> 
-    </View>
+      />
+    </SafeAreaView>
   );
 }
 
@@ -201,32 +206,20 @@ const styles = StyleSheet.create({
     marginTop: 22,
   },
   modalView: {
-    margin: 20,
-    backgroundColor: 'white',
+    backgroundColor: '#222222',
     borderRadius: 20,
-    padding: 25,
+    paddingTop: '3%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    height: '50%',
   },
   button: {
     margin: 5,
     borderRadius: 20,
     padding: 10,
     width: 150,
-    elevation: 2,
-    shadowOpacity: .75,
-    shadowOffset: [0,0],
   },
   buttonColor: {
-    backgroundColor: '#2196F3',
-    shadowColor : '#17b6ff'
+    shadowColor: '#17b6ff'
   },
   textStyle: {
     color: 'white',
@@ -235,23 +228,25 @@ const styles = StyleSheet.create({
   },
   modalText: {
     marginBottom: 10,
+    fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+    color: 'white',
   },
   touchable: {
     padding: 10,
-    shadowOpacity: .5, 
-    shadowOffset: [0,0], 
-    backgroundColor: '#17b6ff', 
-    shadowColor : '#17b6ff'
+    shadowOpacity: .5,
+    shadowOffset: [0, 0],
+    backgroundColor: '#17b6ff',
+    shadowColor: '#17b6ff'
   },
 
   touchableRow: {
     marginHorizontal: 5,
     padding: 10,
-    shadowOpacity: .5, 
-    shadowOffset: [0,0], 
-    backgroundColor: '#000000', 
-    shadowColor : '#000000'
+    shadowOpacity: .5,
+    shadowOffset: [0, 0],
+    backgroundColor: '#000000',
+    shadowColor: '#000000'
   },
 });

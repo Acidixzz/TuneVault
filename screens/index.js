@@ -5,5 +5,5 @@ import Settings from "./Settings";
 export {
     Library,
     Songs,
-    Settings
+    Settings,
 }
