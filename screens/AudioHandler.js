@@ -10,9 +10,9 @@ export default class AudioHandler {
             loadAudio();
             this.songs = songs;
 
-            this._cur = null;
-            this.prev = null;
-            this.next = null;
+            this.cur = new Audio.Sound();
+            this.prev = new Audio.Sound();
+            this.next = new Audio.Sound();
 
             //this will be the row data for prev and next
             this.prevRow = null;
@@ -23,18 +23,7 @@ export default class AudioHandler {
         }
     }
 
-    get cur() {
-        return this._cur;
-    }
-
-    set cur(value) {
-        if (this._cur !== value) {
-            this._cur = value;
-            this._cur?.setOnPlaybackStatusUpdate(this.OnPlaybackStatusUpdate);
-        }
-    }
-
-    OnPlaybackStatusUpdate = status => {
+    playNextWhenDone = status => {
         if (status.didJustFinish) {
             this.playNext(this.songs);
         }
@@ -61,22 +50,22 @@ export default class AudioHandler {
             await this.cur.stopAsync();
             this.songs = songs;
             await this.next.unloadAsync();
+            let temp = this.next;
+
             this.next = this.cur;
             this.cur = this.prev;
 
             this.nextRow = this.curRow;
             this.curRow = this.prevRow;
 
+            this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);
             await this.cur.playAsync();
 
             let curIndex = await songs.findIndex(item => item.SONG_GU === this.curRow.SONG_GU);
             this.prevRow = await songs[curIndex > 0 ? curIndex - 1 : songs.length - 1];
 
-            const { sound: prevSong } = await Audio.Sound.createAsync(
-                { uri: this.prevRow.FILE_PATH },
-                { shouldPlay: false }
-            );
-            this.prev = prevSong;
+            this.prev = temp;
+            await this.prev.loadAsync({ uri: this.prevRow.FILE_PATH }, { shouldPlay: false });
         } catch (error) {
             console.log("Error when clicking prev: ", error);
         }
@@ -87,22 +76,22 @@ export default class AudioHandler {
             await this.cur.stopAsync();
             this.songs = songs;
             await this.prev.unloadAsync();
+            let temp = this.prev;
+
             this.prev = this.cur;
             this.cur = this.next;
 
             this.prevRow = this.curRow;
             this.curRow = this.nextRow;
 
+            this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);
             await this.cur.playAsync();
 
             let curIndex = await songs.findIndex(item => item.SONG_GU === this.curRow.SONG_GU);
             this.nextRow = await songs[curIndex < songs.length - 1 ? curIndex + 1 : 0];
 
-            const { sound: nextSong } = await Audio.Sound.createAsync(
-                { uri: this.nextRow.FILE_PATH },
-                { shouldPlay: false }
-            );
-            this.next = nextSong;
+            this.next = temp;
+            await this.next.loadAsync({ uri: this.nextRow.FILE_PATH }, { shouldPlay: false });
         } catch (error) {
             console.log("Error when clicking next: ", error);
         }
@@ -110,10 +99,10 @@ export default class AudioHandler {
 
     setCurNextPrev = async (cur, songs) => {
         try {
-            if (this.cur && this.curRow === cur) {
+            if (this.cur._loaded && this.curRow === cur) {
                 return;
             }
-            else if (this.cur) {
+            else if (this.cur._loaded) {
                 await this.cur.stopAsync();
                 await this.cur.unloadAsync();
                 if (this.next) {
@@ -128,23 +117,11 @@ export default class AudioHandler {
             this.curRow = cur;
             this.nextRow = await songs[curIndex < songs.length - 1 ? curIndex + 1 : 0];
 
-            const { sound: curSong } = await Audio.Sound.createAsync(
-                { uri: cur.FILE_PATH },
-                { shouldPlay: false }
-            );
-            this.cur = curSong;
+            await this.cur.loadAsync({ uri: cur.FILE_PATH }, { shouldPlay: false });
+            await this.prev.loadAsync({ uri: this.prevRow.FILE_PATH }, { shouldPlay: false });
+            await this.next.loadAsync({ uri: this.nextRow.FILE_PATH }, { shouldPlay: false });
 
-            const { sound: prevSong } = await Audio.Sound.createAsync(
-                { uri: this.prevRow.FILE_PATH },
-                { shouldPlay: false }
-            );
-            this.prev = prevSong;
-
-            const { sound: nextSong } = await Audio.Sound.createAsync(
-                { uri: this.nextRow.FILE_PATH },
-                { shouldPlay: false }
-            );
-            this.next = nextSong;
+            this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);
             await this.cur.playAsync();
         } catch (error) {
             console.log("Error setting cur, next, and prev: ", error);

@@ -4,6 +4,13 @@
     "slug": "TuneVault",
     "version": "1.0.0",
     "orientation": "portrait",
+    "ios": {
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
+    },
     "assetBundlePatterns": [
       "**/*"
     ]
