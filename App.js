@@ -5,10 +5,13 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import 'react-native-gesture-handler';
-import { useEffect, useState } from 'react';
-//import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createContext, useEffect, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { AudioProvider } from './AudioProvider';
+import CurrentSongFooter from './screens/components/CurrentSongFooter';
+
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+
 
 const screenOptions = {
   tabBarShowLabel: false,
@@ -19,10 +22,12 @@ const screenOptions = {
     right: 0,
     left: 0,
     elevation: 0,
-    height: 90,
-    backgroundColor: "#171717CC",
+    height: 100,
     borderTopWidth: 0,
   },
+  tabBarBackground: () => (
+    <LinearGradient colors={['#121212cc', '#121212ff']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 0.75 }} style={StyleSheet.absoluteFill} />
+  )
 };
 
 const tabs = {
@@ -36,63 +41,52 @@ export default function App() {
 
   return (
     <>
-      <NavigationContainer>
-        <Tab.Navigator screenOptions={screenOptions}>
-          <Tab.Screen
-            name="Library"
-            component={Library}
-            options={{
-              tabBarIcon: ({ focused }) => {
-                return (
-                  <View style={styles.navSection}>
-                    <MaterialIcons name="library-music" size={36} color={focused ? "white" : "#999"} />
-                    <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Library</Text>
-                  </View>
-                )
-              },
-            }} />
-          <Tab.Screen
-            name="Songs"
-            component={Songs}
-            options={{
-              tabBarIcon: ({ focused }) => {
-                return (
-                  <View style={styles.navSection}>
-                    <MaterialIcons name="add-box" size={36} color={focused ? "white" : "#999"} />
-                    <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Songs</Text>
-                  </View>
-                )
-              },
-            }} />
-          <Tab.Screen
-            name="Settings"
-            component={Settings}
-            options={{
-              tabBarIcon: ({ focused }) => {
-                return (
-                  <View style={styles.navSection}>
-                    <MaterialCommunityIcons name="cog" size={36} color={focused ? "white" : "#999"} />
-                    <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Settings</Text>
-                  </View>
-                )
-              },
-            }} />
-        </Tab.Navigator>
-      </NavigationContainer>
-
-      {/* <NavigationContainer>
-        <Stack.Navigator initialRouteName='Welcome' screenOptions={
-          {headerShown: false, 
-           gestureEnabled: true, 
-           customAnimationOnGesture: true,
-           fullScreenGestureEnabled: true,
-           gestureDirection: 'horizontal'}
-        }>
-
-          <Stack.Screen name="Welcome" component={Welcome}/>
-          <Stack.Screen name="Settings" component={Settings}/>
-        </Stack.Navigator>
-      </NavigationContainer> */}
+      <AudioProvider>
+        <NavigationContainer>
+          <Tab.Navigator screenOptions={screenOptions}>
+            <Tab.Screen
+              name="Library"
+              component={Library}
+              options={{
+                tabBarIcon: ({ focused }) => {
+                  return (
+                    <View style={styles.navSection}>
+                      <MaterialIcons name="library-music" size={36} color={focused ? "white" : "#999"} />
+                      <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Library</Text>
+                    </View>
+                  )
+                },
+              }} />
+            <Tab.Screen
+              name="Songs"
+              component={Songs}
+              options={{
+                tabBarIcon: ({ focused }) => {
+                  return (
+                    <View style={styles.navSection}>
+                      <MaterialIcons name="add-box" size={36} color={focused ? "white" : "#999"} />
+                      <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Songs</Text>
+                    </View>
+                  )
+                },
+              }} />
+            <Tab.Screen
+              name="Settings"
+              component={Settings}
+              options={{
+                tabBarIcon: ({ focused }) => {
+                  return (
+                    <View style={styles.navSection}>
+                      <MaterialCommunityIcons name="cog" size={36} color={focused ? "white" : "#999"} />
+                      <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Settings</Text>
+                    </View>
+                  )
+                },
+              }} />
+          </Tab.Navigator>
+        </NavigationContainer>
+        <CurrentSongFooter />
+      </AudioProvider>
     </>
   )
 }
@@ -107,5 +101,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     top: 5,
-  }
+  },
 });

@@ -1,18 +1,20 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Ionicons, createIconSetFromFontello } from '@expo/vector-icons';
+import { AudioContext } from '../../AudioProvider';
 
-const SongComponent = ({ item, ah, songs, showEllipsis = false, settingFunc = null }) => {
+const SongComponent = ({ item, songs, showEllipsis = false, settingFunc = null }) => {
   //console.log(item);
   const [isPressed, setIsPressed] = useState(false);
   const [isSettingsPressed, setIsSettingsPressed] = useState(false);
+  const ah = useContext(AudioContext);
 
 
   return (
-    <Pressable disabled={!showEllipsis} onPressIn={() => { setIsPressed(true) }} onPressOut={() => { setIsPressed(false) }} style={[styles.pressable, { backgroundColor: isPressed ? '#00000099' : '#17171700', }]} onPress={() => { ah ? ah.setCurNextPrev(item, songs) : console.log('in setting') }}>
+    <Pressable disabled={!showEllipsis} onPressIn={() => { setIsPressed(true) }} onPressOut={() => { setIsPressed(false) }} style={[styles.pressable, { backgroundColor: isPressed ? '#00000099' : '#17171700', }]} onPress={() => { ah ? ah.setCurNextPrev(item, songs) : console.log('ah not loaded') }}>
       <View style={{ flexDirection: 'row' }}>
 
-        <View style={{ height: 50, width: 50, backgroundColor: 'white' }}>
+        <View style={{ height: 50, width: 50, backgroundColor: 'white', }}>
           {/* Thumbnail image goes here */}
         </View>
 
@@ -37,6 +39,6 @@ const styles = StyleSheet.create({
   pressable: {
     width: '100%',
     paddingVertical: '3%',
-    paddingStart: '5%'
+    paddingStart: '3.5%'
   },
 })
