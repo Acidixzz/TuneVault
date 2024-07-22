@@ -18,7 +18,7 @@ const SongComponent = ({ item, songs, showEllipsis = false, settingFunc = null }
           {/* Thumbnail image goes here */}
         </View>
 
-        <View style={{ start: "25%", flexDirection: 'column', width: '73%' }}>
+        <View style={{ start: "25%", flexDirection: 'column', width: '77%' }}>
           <Text style={{ fontSize: 20, color: 'white' }}>{item?.NAME}</Text>
           <Text style={{ marginTop: 5, color: 'gray' }}>{item?.ARTIST}</Text>
         </View>
