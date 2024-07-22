@@ -148,17 +148,18 @@ export default class AudioHandler {
             let curIndex = songs.findIndex(item => item.SONG_GU === cur.SONG_GU);
             this.prevRow = songs[curIndex > 0 ? curIndex - 1 : songs.length - 1];
             this.curRow = cur;
+            this.nextRow = songs[curIndex < songs.length - 1 ? curIndex + 1 : 0];
+
+            await this.cur.loadAsync({ uri: cur.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
+            await this.prev.loadAsync({ uri: this.prevRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
+            await this.next.loadAsync({ uri: this.nextRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
+
             if (this.listeners) {
                 this.listeners.forEach(item => {
                     item.update(cur);
                     item.updateIsPlaying(true);
                 });
             }
-            this.nextRow = songs[curIndex < songs.length - 1 ? curIndex + 1 : 0];
-
-            await this.cur.loadAsync({ uri: cur.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
-            await this.prev.loadAsync({ uri: this.prevRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
-            await this.next.loadAsync({ uri: this.nextRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
 
             this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);
             if (this.cur._loaded) {

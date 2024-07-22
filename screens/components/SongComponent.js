@@ -1,13 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import React, { useState, useContext } from 'react';
 import { Ionicons, createIconSetFromFontello } from '@expo/vector-icons';
-import { AudioContext } from '../../AudioProvider';
+import { Context } from '../../ContextProvider';
 
 const SongComponent = ({ item, songs, showEllipsis = false, settingFunc = null }) => {
   //console.log(item);
   const [isPressed, setIsPressed] = useState(false);
   const [isSettingsPressed, setIsSettingsPressed] = useState(false);
-  const ah = useContext(AudioContext);
+  const { ah, sh } = useContext(Context);
 
 
   return (

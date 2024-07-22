@@ -5,15 +5,13 @@ import * as MediaLibrary from "expo-media-library";
 import SongComponent from './components/SongComponent';
 import { Ionicons, createIconSetFromFontello, MaterialIcons } from '@expo/vector-icons';
 import * as SQLite from 'expo-sqlite';
-import AudioHandler from './AudioHandler';
-import { Audio } from "expo-av";
-import { AudioContext } from '../AudioProvider';
+import { Context } from '../ContextProvider';
 import * as FileSystem from 'expo-file-system';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Songs() {
   const db = SQLite.openDatabaseSync('TuneVault.db');
-  const ah = useContext(AudioContext);
+  const { ah, sh } = useContext(Context);
   const [songs, setSongs] = useState([]);
 
   //variable to show the elipsis window for each song
@@ -134,58 +132,48 @@ export default function Songs() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'flex-start', backgroundColor: '#131313', }}>
+    <SafeAreaView style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', backgroundColor: '#131313', }}>
 
 
       <View style={styles.headerContainer}>
-        <Text style={{ ...styles.textStyle, fontSize: 40, textAlign: 'left', marginStart: '10%', }}>Songs</Text>
+        <Text style={{ ...styles.textStyle, fontSize: 40, textAlign: 'center', }}>Songs</Text>
 
-
-        {/*next, prev*/}
-        <TouchableOpacity style={styles.touchableRow} onPress={() => { ah?.playNext(songs) }}>
-          <Text style={styles.textStyle}>Next</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.touchableRow} onPress={() => { ah?.playPrev(songs) }}>
-          <Text style={styles.textStyle}>Prev</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={pickMultipleSongs} style={styles.touchable}>
+        <TouchableOpacity onPress={pickMultipleSongs} style={styles.add}>
           <MaterialIcons name="add" size={36} color="black" />
         </TouchableOpacity>
       </View>
 
-      <LinearGradient colors={['#0e0e0e', '#121212cc']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 0.015 }} style={{ width: '100%', height: '100%' }}>
-        {/* react-native-swipe-up-panel!!!! turn the modal into this */}
-        <FlatList style={{ width: '100%', }}
-          showsVerticalScrollIndicator={true}
-          data={songs}
-          renderItem={({ item, index }) => (
-            <View key={index}>
-              <Modal transparent={true} visible={songSettingsVisible}>
-                <View style={{ flex: 1, backgroundColor: 'black', opacity: 0.5 }}>
-                  <Modal animationType='slide' transparent={true} visible={songSettingsVisible}>
-                    <TouchableOpacity style={{ height: '50%' }} onPress={() => setSongSettingsVisible(!songSettingsVisible)} />
-                    <View style={styles.modalView}>
-                      <SongComponent item={curSongForSettings}></SongComponent>
-                      <View style={{ borderBottomColor: '#666666', borderBottomWidth: .25, width: 400, marginTop: '3.15%' }}></View>
-                      <TouchableOpacity style={[styles.button, styles.buttonColor, { width: '100%' }]} onPress={() => deleteRows(curSongForSettings?.NAME, curSongForSettings?.SONG_GU)}>
-                        <Text style={styles.modalText}>Remove</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={[styles.button, styles.buttonColor, { width: '100%' }]} onPress={() => setSongSettingsVisible(!songSettingsVisible)}>
-                        <Text style={styles.modalText}>Close</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </Modal>
-                </View>
-              </Modal>
+      <LinearGradient colors={['#0e0e0e', '#12121200']} style={styles.graadientBackground} />
+      {/* react-native-swipe-up-panel!!!! turn the modal into this */}
+      <FlatList style={{ width: '100%', }}
+        showsVerticalScrollIndicator={true}
+        data={songs}
+        renderItem={({ item, index }) => (
+          <View key={index}>
 
-              <View style={{ flexDirection: 'row', marginTop: index == 0 ? '2%' : 0 }}>
-                <SongComponent item={item} songs={songs} showEllipsis={true} settingFunc={settingsPopup} />
-              </View>
+            <View style={{ flexDirection: 'row', marginTop: index == 0 ? '2%' : 0 }}>
+              <SongComponent item={item} songs={songs} showEllipsis={true} settingFunc={settingsPopup} />
             </View>
-          )}
-        />
-      </LinearGradient>
+          </View>
+        )}
+      />
+      <Modal transparent={true} visible={songSettingsVisible}>
+        <View style={{ flex: 1, backgroundColor: 'black', opacity: 0.5 }}>
+          <Modal animationType='slide' transparent={true} visible={songSettingsVisible}>
+            <TouchableOpacity style={{ height: '50%' }} onPress={() => setSongSettingsVisible(!songSettingsVisible)} />
+            <View style={styles.modalView}>
+              <SongComponent item={curSongForSettings}></SongComponent>
+              <View style={{ borderBottomColor: '#666666', borderBottomWidth: .25, width: 400, marginTop: '3.15%' }}></View>
+              <TouchableOpacity style={[styles.button, styles.buttonColor, { width: '100%' }]} onPress={() => deleteRows(curSongForSettings?.NAME, curSongForSettings?.SONG_GU)}>
+                <Text style={styles.modalText}>Remove</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.buttonColor, { width: '100%' }]} onPress={() => setSongSettingsVisible(!songSettingsVisible)}>
+                <Text style={styles.modalText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </Modal>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -193,10 +181,18 @@ export default function Songs() {
 const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginVertical: '5%',
+    paddingHorizontal: '5%',
     width: '100%',
+  },
+  graadientBackground: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '17.5%',
+    height: 10,
   },
   centeredView: {
     flex: 1,
@@ -232,7 +228,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     color: 'white',
   },
-  touchable: {
+  add: {
     height: 45,
     width: 45,
     justifyContent: 'center',

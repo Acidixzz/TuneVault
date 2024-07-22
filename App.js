@@ -7,7 +7,7 @@ import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import 'react-native-gesture-handler';
 import { createContext, useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { AudioProvider } from './AudioProvider';
+import { ContextProvider } from './ContextProvider';
 import CurrentSongFooter from './screens/components/CurrentSongFooter';
 
 const Tab = createBottomTabNavigator();
@@ -41,7 +41,7 @@ export default function App() {
 
   return (
     <>
-      <AudioProvider>
+      <ContextProvider>
         <NavigationContainer>
           <Tab.Navigator screenOptions={screenOptions}>
             <Tab.Screen
@@ -86,7 +86,7 @@ export default function App() {
           </Tab.Navigator>
         </NavigationContainer>
         <CurrentSongFooter />
-      </AudioProvider>
+      </ContextProvider>
     </>
   )
 }
