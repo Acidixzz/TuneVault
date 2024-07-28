@@ -63,7 +63,7 @@ export default function Settings() {
                     {/*---Shuffle--- */}
                     <View style={styles.toggleComponent}>
                         <View style={{ width: '50%', justifyContent: 'flex-end', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
-                            <View style={styles.icon}>
+                            <View style={[styles.icon, footerSettings.shuffle && { backgroundColor: '#17b6ff' }]}>
                                 <FontAwesome6 name="shuffle" size={20} color="white" />
                             </View>
                             <Text style={[styles.textStyle, { paddingStart: '5%' }]}>Shuffle</Text>
@@ -76,7 +76,7 @@ export default function Settings() {
                     {/*---Prev--- */}
                     <View style={styles.toggleComponent}>
                         <View style={{ width: '50%', justifyContent: 'flex-end', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
-                            <View style={styles.icon}>
+                            <View style={[styles.icon, footerSettings.previous && { backgroundColor: '#17b6ff' }]}>
                                 <FontAwesome6 name="backward" size={20} color="white" />
                             </View>
                             <Text style={[styles.textStyle, { paddingStart: '5%' }]}>Previous</Text>
@@ -89,7 +89,7 @@ export default function Settings() {
                     {/*---Pause/Play--- */}
                     <View style={styles.toggleComponent}>
                         <View style={{ width: '50%', justifyContent: 'flex-end', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
-                            <View style={styles.icon}>
+                            <View style={[styles.icon, footerSettings.play && { backgroundColor: '#17b6ff' }]}>
                                 <FontAwesome6 name="play" size={20} color="white" />
                             </View>
                             <Text style={[styles.textStyle, { paddingStart: '5%' }]}>Pause/Play</Text>
@@ -102,7 +102,7 @@ export default function Settings() {
                     {/*---Next--- */}
                     <View style={[styles.toggleComponent, { borderBottomWidth: 0 }]}>
                         <View style={{ width: '50%', justifyContent: 'flex-end', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center' }}>
-                            <View style={styles.icon}>
+                            <View style={[styles.icon, footerSettings.next && { backgroundColor: '#17b6ff' }]}>
                                 <FontAwesome6 name="forward" size={20} color="white" />
                             </View>
                             <Text style={[styles.textStyle, { paddingStart: '5%' }]}>Next</Text>
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         height: 30,
         width: 30,
-        backgroundColor: '#17b6ff',
+        backgroundColor: '#3c3c3c',
         justifyContent: 'center',
         alignItems: 'center'
     }

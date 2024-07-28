@@ -19,7 +19,11 @@ export default class SettingsHandler {
         loadInitialStorage = async () => {
             let jsonData = await AsyncStorage.getItem(FOOTER_SETTINGS_KEY);
             //console.log(jsonData);
-            this.footerSettings = JSON.parse(jsonData);
+            if (!jsonData) {
+                await AsyncStorage.setItem(FOOTER_SETTINGS_KEY, JSON.stringify(this.footerSettings));
+            } else {
+                this.footerSettings = JSON.parse(jsonData);
+            }
         }
         loadInitialStorage();
     }

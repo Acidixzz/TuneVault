@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { Modal, Alert, StyleSheet, Text, View, TouchableOpacity, Pressable, FlatList, SafeAreaView, TouchableWithoutFeedback } from 'react-native';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Modal, Alert, StyleSheet, Text, View, TouchableOpacity, Pressable, SafeAreaView, TouchableWithoutFeedback } from 'react-native';
 import * as DocumentPicker from "expo-document-picker";
 import * as MediaLibrary from "expo-media-library";
 import SongComponent from './components/SongComponent';
@@ -8,29 +8,43 @@ import * as SQLite from 'expo-sqlite';
 import { Context } from '../ContextProvider';
 import * as FileSystem from 'expo-file-system';
 import { LinearGradient } from 'expo-linear-gradient';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import { ScrollView } from 'react-native-gesture-handler';
+
 
 export default function Songs() {
   const db = SQLite.openDatabaseSync('TuneVault.db');
   const { ah, sh } = useContext(Context);
   const [songs, setSongs] = useState([]);
 
-  //variable to show the elipsis window for each song
-  const [songSettingsVisible, setSongSettingsVisible] = useState(false);
+  const scrollRef = useRef(null);
+
+  //variable to show the elipsis bottomsheet
+  const songSettingsRef = useRef(null);
+  const snapPoints = useMemo(() => ['50%', '90%'], []);
+  const renderBackdrop = useCallback(
+    (props) => <BottomSheetBackdrop appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.8}{...props} />,
+    []
+  );
+
   //current item for setting popup
   const [curSongForSettings, setCurSongForSettings] = useState(null);
 
   useEffect(() => {
 
-    db.withExclusiveTransactionAsync(async (txn) => {
-      await txn.execAsync('CREATE TABLE IF NOT EXISTS songs (SONG_GU TEXT PRIMARY KEY, NAME TEXT NOT NULL, ARTIST TEXT, FILE_PATH TEXT NOT NULL, PICTURE BLOB, DATE_ADDED TEXT NOT NULL)');
-    });
+    const fetchSongs = async () => {
+      await db.withExclusiveTransactionAsync(async (txn) => {
+        await txn.execAsync('CREATE TABLE IF NOT EXISTS songs (SONG_GU TEXT PRIMARY KEY, NAME TEXT NOT NULL, ARTIST TEXT, FILE_PATH TEXT NOT NULL, PICTURE BLOB, DATE_ADDED TEXT NOT NULL)');
+      });
 
-    db.withExclusiveTransactionAsync(async (txn) => {
-      const SELECT = await txn.getAllAsync('SELECT * FROM songs');
-      setSongs(SELECT);
-      //console.log(query);
-      ah.songs = SELECT;
-    });
+      await db.withExclusiveTransactionAsync(async (txn) => {
+        const SELECT = await txn.getAllAsync('SELECT * FROM songs');
+        setSongs(SELECT);
+        //console.log(query);
+        ah.songs = SELECT;
+      });
+    }
+    fetchSongs();
   }, []);
 
   const pickMultipleSongs = async () => {
@@ -100,12 +114,16 @@ export default function Songs() {
     try {
       db.withExclusiveTransactionAsync(async (txn) => {
         await txn.runAsync('DELETE FROM songs WHERE SONG_GU == ?', guid);
+        await ah.reset();
         await FileSystem.deleteAsync(FileSystem.documentDirectory + guid + name);
 
         const SELECT = await txn.getAllAsync('SELECT * FROM songs');
         setSongs(SELECT);
+        console.log(SELECT);
+        if (SELECT) {
+          ah.setCurNextPrev(SELECT[0], SELECT);
+        }
       });
-      setSongSettingsVisible(false);
     } catch (error) {
       console.log("Error deleting a song: ", error);
     }
@@ -125,7 +143,7 @@ export default function Songs() {
   const settingsPopup = (song) => {
     try {
       setCurSongForSettings(song);
-      setSongSettingsVisible(true);
+      songSettingsRef.current?.present();
     } catch (error) {
       console.log("Error loading modal window: ", error);
     }
@@ -144,37 +162,45 @@ export default function Songs() {
       </View>
 
       <LinearGradient colors={['#0e0e0e', '#12121200']} style={styles.graadientBackground} />
-      {/* react-native-swipe-up-panel!!!! turn the modal into this */}
-      <FlatList style={{ width: '100%', }}
-        showsVerticalScrollIndicator={true}
-        data={songs}
-        renderItem={({ item, index }) => (
+      <ScrollView style={{ width: '100%', maxHeight: '100%' }} ref={scrollRef}>
+        {songs.map((item, index) => (
           <View key={index}>
-
-            <View style={{ flexDirection: 'row', marginTop: index == 0 ? '2%' : 0 }}>
-              <SongComponent item={item} songs={songs} showEllipsis={true} settingFunc={settingsPopup} />
+            <View style={[{ flexDirection: 'row', marginTop: index == 0 ? '2%' : 0 }]}>
+              <SongComponent ref={scrollRef} item={item} songs={songs} showEllipsis={true} settingFunc={settingsPopup} />
             </View>
+            {index === songs.length - 1 && (<View style={{ height: 125 }} />)}
           </View>
-        )}
-      />
-      <Modal transparent={true} visible={songSettingsVisible}>
-        <View style={{ flex: 1, backgroundColor: 'black', opacity: 0.5 }}>
-          <Modal animationType='slide' transparent={true} visible={songSettingsVisible}>
-            <TouchableOpacity style={{ height: '50%' }} onPress={() => setSongSettingsVisible(!songSettingsVisible)} />
-            <View style={styles.modalView}>
-              <SongComponent item={curSongForSettings}></SongComponent>
-              <View style={{ borderBottomColor: '#666666', borderBottomWidth: .25, width: 400, marginTop: '3.15%' }}></View>
-              <TouchableOpacity style={[styles.button, styles.buttonColor, { width: '100%' }]} onPress={() => deleteRows(curSongForSettings?.NAME, curSongForSettings?.SONG_GU)}>
-                <Text style={styles.modalText}>Remove</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.button, styles.buttonColor, { width: '100%' }]} onPress={() => setSongSettingsVisible(!songSettingsVisible)}>
-                <Text style={styles.modalText}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </Modal>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        ))}
+      </ScrollView>
+
+      <BottomSheetModal
+        ref={songSettingsRef}
+        snapPoints={snapPoints}
+        index={0}
+        key={'songSettings'}
+        name={'songSettings'}
+        enableDismissOnClose={true}
+        backdropComponent={renderBackdrop}
+        backgroundStyle={{ backgroundColor: '#222222' }}
+        handleIndicatorStyle={{ backgroundColor: '#777777', width: 50 }}
+      >
+        <BottomSheetScrollView style={{ backgroundColor: '#222222' }}>
+          <View style={{ flex: 1, marginTop: '1%' }}>
+            <SongComponent item={curSongForSettings} ref={songSettingsRef}></SongComponent>
+            <View style={{ borderBottomColor: '#666666', borderBottomWidth: 1, width: 400, marginTop: '3.15%' }}></View>
+            <TouchableOpacity style={[styles.button, { width: '100%' }]} onPress={() => { songSettingsRef.current?.close(); ah.addToQueue(curSongForSettings); }}>
+              <Text style={styles.modalText}>Add to queue</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, { width: '100%' }]} onPress={() => { songSettingsRef.current?.close(); deleteRows(curSongForSettings?.NAME, curSongForSettings?.SONG_GU); }}>
+              <Text style={styles.modalText}>Remove</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, { width: '100%' }]} onPress={() => songSettingsRef.current?.close()}>
+              <Text style={styles.modalText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </BottomSheetScrollView>
+      </BottomSheetModal>
+    </SafeAreaView >
   );
 }
 
@@ -225,7 +251,7 @@ const styles = StyleSheet.create({
   },
   modalText: {
     fontSize: 15,
-    textAlign: 'left',
+    textAlign: 'center',
     color: 'white',
   },
   add: {

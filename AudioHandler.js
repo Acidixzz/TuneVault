@@ -10,6 +10,8 @@ export default class AudioHandler {
             loadAudio();
             this.songs = songs; //only here to automatically play the next song
 
+            this.queue = [];
+
             this.cur = new Audio.Sound();
             this.prev = new Audio.Sound();
             this.next = new Audio.Sound();
@@ -103,6 +105,28 @@ export default class AudioHandler {
             else {
                 return;
             }
+
+            if (this.queue.length > 0) {
+                await this.cur.unloadAsync();
+                await this.cur.loadAsync({ uri: this.queue[0].FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
+
+                if (this.listeners) {
+                    this.listeners.forEach(item => {
+                        item.update(this.queue[0]);
+                        item.updateIsPlaying(true);
+                    });
+                }
+
+                this.queue.shift();
+
+                this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);
+
+                if (this.cur._loaded) {
+                    await this.cur.playAsync();
+                }
+                return;
+            }
+
             this.songs = songs;
             await this.prev.unloadAsync();
             let temp = this.prev;
@@ -135,11 +159,29 @@ export default class AudioHandler {
         }
     }
 
+    reset = async () => {
+        try {
+
+            await this.cur.unloadAsync();
+            await this.prev.unloadAsync();
+            await this.next.unloadAsync();
+            this.curRow = null;
+            this.nextRow = null;
+            this.prevRow = null;
+            this.songs = null;
+
+        } catch (error) {
+            console.log('restError', error);
+        }
+    }
+
     setCurNextPrev = async (cur, songs) => {
         try {
             if (this.cur._loaded && this.curRow === cur) {
                 return;
             }
+
+            this.songs = songs;
 
             await this.cur.unloadAsync();
             await this.prev.unloadAsync();
@@ -149,6 +191,7 @@ export default class AudioHandler {
             this.prevRow = songs[curIndex > 0 ? curIndex - 1 : songs.length - 1];
             this.curRow = cur;
             this.nextRow = songs[curIndex < songs.length - 1 ? curIndex + 1 : 0];
+
 
             await this.cur.loadAsync({ uri: cur.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
             await this.prev.loadAsync({ uri: this.prevRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
@@ -167,6 +210,15 @@ export default class AudioHandler {
             }
         } catch (error) {
             console.log("Error setting cur, next, and prev: ", error);
+        }
+    }
+
+    addToQueue = (song) => {
+        try {
+            this.queue.push(song);
+            console.log(this.queue);
+        } catch (error) {
+            console.log('addToQueueError:', error);
         }
     }
 }

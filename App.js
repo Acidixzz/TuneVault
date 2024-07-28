@@ -9,6 +9,9 @@ import { createContext, useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ContextProvider } from './ContextProvider';
 import CurrentSongFooter from './screens/components/CurrentSongFooter';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { createNotifications } from 'react-native-notificated';
 
 const Tab = createBottomTabNavigator();
 
@@ -42,50 +45,54 @@ export default function App() {
   return (
     <>
       <ContextProvider>
-        <NavigationContainer>
-          <Tab.Navigator screenOptions={screenOptions}>
-            <Tab.Screen
-              name="Library"
-              component={Library}
-              options={{
-                tabBarIcon: ({ focused }) => {
-                  return (
-                    <View style={styles.navSection}>
-                      <MaterialIcons name="library-music" size={36} color={focused ? "white" : "#999"} />
-                      <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Library</Text>
-                    </View>
-                  )
-                },
-              }} />
-            <Tab.Screen
-              name="Songs"
-              component={Songs}
-              options={{
-                tabBarIcon: ({ focused }) => {
-                  return (
-                    <View style={styles.navSection}>
-                      <MaterialIcons name="add-box" size={36} color={focused ? "white" : "#999"} />
-                      <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Songs</Text>
-                    </View>
-                  )
-                },
-              }} />
-            <Tab.Screen
-              name="Settings"
-              component={Settings}
-              options={{
-                tabBarIcon: ({ focused }) => {
-                  return (
-                    <View style={styles.navSection}>
-                      <MaterialCommunityIcons name="cog" size={36} color={focused ? "white" : "#999"} />
-                      <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Settings</Text>
-                    </View>
-                  )
-                },
-              }} />
-          </Tab.Navigator>
-        </NavigationContainer>
-        <CurrentSongFooter />
+        <GestureHandlerRootView>
+          <BottomSheetModalProvider>
+            <NavigationContainer>
+              <Tab.Navigator screenOptions={screenOptions}>
+                <Tab.Screen
+                  name="Library"
+                  component={Library}
+                  options={{
+                    tabBarIcon: ({ focused }) => {
+                      return (
+                        <View style={styles.navSection}>
+                          <MaterialIcons name="library-music" size={36} color={focused ? "white" : "#999"} />
+                          <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Library</Text>
+                        </View>
+                      )
+                    },
+                  }} />
+                <Tab.Screen
+                  name="Songs"
+                  component={Songs}
+                  options={{
+                    tabBarIcon: ({ focused }) => {
+                      return (
+                        <View style={styles.navSection}>
+                          <MaterialIcons name="add-box" size={36} color={focused ? "white" : "#999"} />
+                          <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Songs</Text>
+                        </View>
+                      )
+                    },
+                  }} />
+                <Tab.Screen
+                  name="Settings"
+                  component={Settings}
+                  options={{
+                    tabBarIcon: ({ focused }) => {
+                      return (
+                        <View style={styles.navSection}>
+                          <MaterialCommunityIcons name="cog" size={36} color={focused ? "white" : "#999"} />
+                          <Text style={[styles.label, { color: focused ? "white" : "#999" }]}>Settings</Text>
+                        </View>
+                      )
+                    },
+                  }} />
+              </Tab.Navigator>
+            </NavigationContainer>
+            <CurrentSongFooter />
+          </BottomSheetModalProvider>
+        </GestureHandlerRootView>
       </ContextProvider>
     </>
   )

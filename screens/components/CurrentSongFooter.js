@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderRadius: 8,
         bottom: 100,
-        zIndex: 1
+        zIndex: 0
     },
     popup: {
         width: '95%',
