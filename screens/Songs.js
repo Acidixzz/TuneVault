@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, Alert, StyleSheet, Text, View, TouchableOpacity, Pressable, SafeAreaView, TouchableWithoutFeedback } from 'react-native';
+import { Modal, Alert, StyleSheet, Text, View, TouchableOpacity, Pressable, SafeAreaView, TouchableWithoutFeedback, Animated, Easing } from 'react-native';
 import * as DocumentPicker from "expo-document-picker";
 import * as MediaLibrary from "expo-media-library";
 import SongComponent from './components/SongComponent';
@@ -10,14 +10,25 @@ import * as FileSystem from 'expo-file-system';
 import { LinearGradient } from 'expo-linear-gradient';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { ScrollView } from 'react-native-gesture-handler';
-
+import { useNotificationController } from 'react-native-notificated';
+import { notify } from '../ContextProvider';
+import { Sound } from 'expo-av/build/Audio';
 
 export default function Songs() {
   const db = SQLite.openDatabaseSync('TuneVault.db');
   const { ah, sh } = useContext(Context);
   const [songs, setSongs] = useState([]);
 
+  const [shuffle, setShuffle] = useState(false);
+
+  //Toasts
+  const { remove } = useNotificationController();
+  const [curToast, setCurToast] = useState('');
+  const [openSoundbar, setOpenSoundbar] = useState(false);
+
+
   const scrollRef = useRef(null);
+  const scrollHeight = useState(new Animated.Value(125))[0];
 
   //variable to show the elipsis bottomsheet
   const songSettingsRef = useRef(null);
@@ -45,7 +56,39 @@ export default function Songs() {
       });
     }
     fetchSongs();
+    sh.listeners.push({
+      openSoundbar: setOpenSoundbar,
+      shuffle: setShuffle
+    });
   }, []);
+
+  useEffect(() => {
+    if (openSoundbar) {
+      Animated.timing(scrollHeight, {
+        toValue: 200,
+        duration: 250,
+        easing: Easing.linear,
+        useNativeDriver: false,
+      }).start();
+    } else {
+      setTimeout(() => {
+        Animated.timing(scrollHeight, {
+          toValue: 125,
+          duration: 250,
+          easing: Easing.linear,
+          useNativeDriver: false,
+        }).start();
+      }, 50);
+    }
+  }, [openSoundbar]);
+
+  const setAllShuffles = async (shuffle) => {
+    try {
+      sh.listeners.forEach((item) => item.shuffle?.(shuffle));
+    } catch (error) {
+      console.log('setAllShufflesError', error);
+    }
+  }
 
   const pickMultipleSongs = async () => {
     try {
@@ -149,6 +192,18 @@ export default function Songs() {
     }
   };
 
+  const toastHandler = () => {
+    remove(curToast);
+    setCurToast(notify('queue', {
+      params: {
+        bottom: ah.cur._loaded ? openSoundbar ? 180 : 110 : 50
+      },
+      config: {
+        gestureConfig: { direction: 'x' },
+      },
+    }).id);
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', backgroundColor: '#131313', }}>
 
@@ -166,9 +221,9 @@ export default function Songs() {
         {songs.map((item, index) => (
           <View key={index}>
             <View style={[{ flexDirection: 'row', marginTop: index == 0 ? '2%' : 0 }]}>
-              <SongComponent ref={scrollRef} item={item} songs={songs} showEllipsis={true} settingFunc={settingsPopup} />
+              <SongComponent ref={scrollRef} item={item} songs={songs} showEllipsis={true} settingFunc={settingsPopup} toastHandler={toastHandler} shuffle={shuffle} />
             </View>
-            {index === songs.length - 1 && (<View style={{ height: 125 }} />)}
+            {index === songs.length - 1 && (<Animated.View style={{ height: scrollHeight }} />)}
           </View>
         ))}
       </ScrollView>
@@ -188,7 +243,7 @@ export default function Songs() {
           <View style={{ flex: 1, marginTop: '1%' }}>
             <SongComponent item={curSongForSettings} ref={songSettingsRef}></SongComponent>
             <View style={{ borderBottomColor: '#666666', borderBottomWidth: 1, width: 400, marginTop: '3.15%' }}></View>
-            <TouchableOpacity style={[styles.button, { width: '100%' }]} onPress={() => { songSettingsRef.current?.close(); ah.addToQueue(curSongForSettings); }}>
+            <TouchableOpacity style={[styles.button, { width: '100%' }]} onPress={() => { songSettingsRef.current?.close(); toastHandler(); ah.addToQueue(curSongForSettings); }}>
               <Text style={styles.modalText}>Add to queue</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.button, { width: '100%' }]} onPress={() => { songSettingsRef.current?.close(); deleteRows(curSongForSettings?.NAME, curSongForSettings?.SONG_GU); }}>

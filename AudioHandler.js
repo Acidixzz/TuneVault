@@ -1,11 +1,18 @@
-import { Audio } from "expo-av";
+import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from "expo-av";
 
 export default class AudioHandler {
 
     constructor(songs = null) {
         try {
             const loadAudio = async () => {
-                await Audio.setAudioModeAsync({ playsInSilentModeIOS: true, staysActiveInBackground: true });
+                await Audio.setAudioModeAsync({
+                    playsInSilentModeIOS: true,
+                    staysActiveInBackground: true,
+                    interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+                    interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+                    shouldDuckAndroid: true,
+                    playThroughEarpieceAndroid: true,
+                });
             }
             loadAudio();
             this.songs = songs; //only here to automatically play the next song
@@ -175,15 +182,15 @@ export default class AudioHandler {
         }
     }
 
-    setCurNextPrev = async (cur, songs) => {
+    setCurNextPrev = async (cur, songs, fromFooter = false) => {
         try {
-            if (this.cur._loaded && this.curRow === cur) {
+            if (this.cur._loaded && this.curRow === cur && !fromFooter) {
                 return;
             }
 
             this.songs = songs;
 
-            await this.cur.unloadAsync();
+            if (!fromFooter) await this.cur.unloadAsync();
             await this.prev.unloadAsync();
             await this.next.unloadAsync();
 
@@ -193,19 +200,19 @@ export default class AudioHandler {
             this.nextRow = songs[curIndex < songs.length - 1 ? curIndex + 1 : 0];
 
 
-            await this.cur.loadAsync({ uri: cur.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
+            if (!fromFooter) await this.cur.loadAsync({ uri: cur.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
             await this.prev.loadAsync({ uri: this.prevRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
             await this.next.loadAsync({ uri: this.nextRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
 
-            if (this.listeners) {
+            if (this.listeners && !fromFooter) {
                 this.listeners.forEach(item => {
                     item.update(cur);
                     item.updateIsPlaying(true);
                 });
             }
 
-            this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);
-            if (this.cur._loaded) {
+            if (!fromFooter) this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);
+            if (this.cur._loaded && !fromFooter) {
                 await this.cur.playAsync();
             }
         } catch (error) {

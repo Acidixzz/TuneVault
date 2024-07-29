@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, TouchableOpacity, View, Animated, Easing } from 'react-native';
-import React, { useState, useContext, useEffect } from 'react';
-import { FontAwesome6 } from '@expo/vector-icons';
+import React, { useState, useContext, useEffect, useRef } from 'react';
+import { FontAwesome6, Entypo } from '@expo/vector-icons';
 import { Context } from '../../ContextProvider';
 import { ProgressBar } from 'react-native-paper';
 import { albumNeedsMigrationAsync } from 'expo-media-library';
@@ -8,16 +8,23 @@ import { err } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FOOTER_SETTINGS_KEY } from '../../SettingsHandler';
 import { Slider } from '@miblanchard/react-native-slider';
+import TextTicker from 'react-native-text-ticker';
+import * as SQLite from 'expo-sqlite';
 
 const CurrentSongFooter = () => {
     //console.log(item);
+    const db = SQLite.openDatabaseSync('TuneVault.db');
 
     const { ah, sh } = useContext(Context);
     const [name, setName] = useState('');
     const [artist, setArtist] = useState('');
+    const [curSong, setCurSong] = useState('');
     const [progress, setProgress] = useState(0);
     const [isPlaying, setIsPlaying] = useState(true);
     const [long, setLong] = useState('#005982');
+
+    const [songs, setSongs] = useState([]);
+    //later for order of songs and stuff
 
     const [openSoundbar, setOpenSoundbar] = useState(false);
     const [animationComplete, setAnimationComplete] = useState(false);
@@ -28,25 +35,33 @@ const CurrentSongFooter = () => {
     const [toChange, setToChange] = useState(0);
     const [curDuration, setCurDuration] = useState(0);
 
+    const [shuffle, setShuffle] = useState(false);
+
+    const [disabledBounceAnimation, setDisabledBounceAnimation] = useState(false);
+    const textRef = useRef(null);
+
     const [footerSettings, setFooterSettings] = useState({
         shuffle: false,
         previous: false,
         play: false,
         next: false
     });
+    const [numberOfButtons, setNumberOfButtons] = useState(2);
 
     useEffect(() => {
         ah.listeners.push({
             update: (data) => {
                 setName(data?.NAME);
                 setArtist(data?.ARTIST);
+                setCurSong(data);
             },
             updateProgress: (num) => setProgress(num),
             updateIsPlaying: (bool) => setIsPlaying(bool),
             updateDuration: (num) => { setCurDuration(num) },
         });
         sh.listeners.push({
-            update: setFooterSettings
+            update: setFooterSettings,
+            shuffle: setShuffle
         });
         loadInitialStorage = async () => {
             let jsonData = await AsyncStorage.getItem(FOOTER_SETTINGS_KEY);
@@ -105,9 +120,8 @@ const CurrentSongFooter = () => {
                     useNativeDriver: false,
                 }).start();
             });
-
-
         }
+        sh.listeners.forEach((item) => item.openSoundbar?.(openSoundbar));
     }, [openSoundbar]);
 
     useEffect(() => {
@@ -121,6 +135,41 @@ const CurrentSongFooter = () => {
             }).start();
         }
     }, [animationComplete]);
+
+    useEffect(() => {
+        let num = 0;
+        if (footerSettings.shuffle) num += 1;
+        if (footerSettings.previous) num += 1;
+        if (footerSettings.play) num += 1;
+        if (footerSettings.next) num += 1;
+        setNumberOfButtons(num);
+        setDisabledBounceAnimation(textRef.current?.textWidth < 300 - 45 * num);
+    }, [footerSettings])
+
+    useEffect(() => {
+        if (disabledBounceAnimation) {
+            textRef.current?.stopAnimation();
+            console.log('stop');
+        } else {
+            textRef.current?.startAnimation();
+            console.log('play');
+        }
+    }, [disabledBounceAnimation])
+
+    const setAllShuffles = async (shuffle) => {
+        await db.withExclusiveTransactionAsync(async (txn) => {
+            let SELECT = [];
+            if (shuffle) {
+                SELECT = await txn.getAllAsync(`SELECT * FROM songs ORDER BY RANDOM();`);
+            } else {
+                SELECT = await txn.getAllAsync(`SELECT * FROM songs;`);
+            }
+            setSongs(SELECT);
+
+            ah.setCurNextPrev(curSong, SELECT, true);
+        });
+        sh.listeners.forEach((item) => item.shuffle?.(shuffle));
+    }
 
     const handlePausePlay = () => {
         try {
@@ -147,14 +196,6 @@ const CurrentSongFooter = () => {
         let formattedTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
         return formattedTime;
-    }
-
-    const resetStorage = async () => {
-        try {
-            await AsyncStorage.clear();
-        } catch (error) {
-            console.log(error);
-        }
     }
 
     const setPosition = async () => {
@@ -201,17 +242,18 @@ const CurrentSongFooter = () => {
                         <View style={{ height: 40, width: 40, backgroundColor: 'white', borderRadius: 5, marginStart: '5%' }}>
                             {/* Thumbnail image goes here */}
                         </View>
-                        <View style={{ flexDirection: 'column', marginStart: '5%', justifyContent: 'center' }}>
-                            <Text style={{ color: 'white', fontSize: 12, marginBottom: '4%' }}>{name}</Text>
+                        <View style={{ flexDirection: 'column', marginStart: '5%', justifyContent: 'center', height: 40, width: 300 - 45 * numberOfButtons, }}>
+                            <TextTicker ref={textRef} style={{ color: 'white', fontSize: 12, marginBottom: 5, }} animationType='bounce' bounceDelay={2000} bounceSpeed={100} bouncePadding={{ left: 0, right: 0 }}>{name}</TextTicker>
                             <Text style={{ color: '#c4c4c4', fontSize: 12 }}>{artist}</Text>
                         </View>
                     </View>
 
-                    <View style={styles.buttonContainer}>
+                    <View style={[styles.buttonContainer]}>
 
                         {footerSettings.shuffle && (
-                            <TouchableOpacity style={styles.vectorButton} onPress={() => { console.log('shuffle click') }} activeOpacity={0.6}>
+                            <TouchableOpacity style={[styles.vectorButton, { justifyContent: 'center', alignItems: 'center' }]} onPress={() => { setAllShuffles(!shuffle) }} activeOpacity={0.6}>
                                 <FontAwesome6 name="shuffle" size={30} color="white" />
+                                {shuffle && (<Entypo style={{ marginVertical: '-25%', marginRight: 3 }} name="dot-single" size={24} color="white" />)}
                             </TouchableOpacity>
                         )}
 

@@ -11,10 +11,9 @@ import { ContextProvider } from './ContextProvider';
 import CurrentSongFooter from './screens/components/CurrentSongFooter';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { createNotifications } from 'react-native-notificated';
+import { NotificationsProvider } from './ContextProvider';
 
 const Tab = createBottomTabNavigator();
-
 
 const screenOptions = {
   tabBarShowLabel: false,
@@ -29,7 +28,7 @@ const screenOptions = {
     borderTopWidth: 0,
   },
   tabBarBackground: () => (
-    <LinearGradient colors={['#121212cc', '#121212ff']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 0.75 }} style={StyleSheet.absoluteFill} />
+    <LinearGradient colors={['#131313cc', '#131313']} style={styles.graadientBackground} />
   )
 };
 
@@ -46,6 +45,7 @@ export default function App() {
     <>
       <ContextProvider>
         <GestureHandlerRootView>
+          <NotificationsProvider />
           <BottomSheetModalProvider>
             <NavigationContainer>
               <Tab.Navigator screenOptions={screenOptions}>
@@ -108,5 +108,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     top: 5,
+  },
+  graadientBackground: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '-1%',
+    height: 67,
   },
 });

@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@domir/react-native-measure-text": "^0.1.8",
     "@expo/vector-icons": "^14.0.0",
     "@gorhom/bottom-sheet": "^4.6.3",
     "@miblanchard/react-native-slider": "^2.6.0",
@@ -36,6 +37,7 @@
     "react-native-paper": "^5.12.3",
     "react-native-reanimated": "~3.10.1",
     "react-native-svg": "15.2.0",
+    "react-native-text-ticker": "^1.14.0",
     "react-native-web": "~0.19.6",
     "uuid": "^9.0.1"
   },

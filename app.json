@@ -11,6 +11,11 @@
         ]
       }
     },
+    "android": {
+      "permissions": [
+        "WAKE_LOCK"
+      ]
+    },
     "assetBundlePatterns": [
       "**/*"
     ]

@@ -14,7 +14,9 @@ export default class SettingsHandler {
             next: false
         }
 
-        this.listeners = []; //listeners will be in this format { update: () => void }
+        this.listeners = []; //listeners will be in this format { update: (prop) => void } 
+        //**new case added is {openSoundbar: (prop) => void}
+        //**new case added is {shuffle: (bool) => void} 
 
         loadInitialStorage = async () => {
             let jsonData = await AsyncStorage.getItem(FOOTER_SETTINGS_KEY);
@@ -31,7 +33,7 @@ export default class SettingsHandler {
     updateFooterSettings = async (obj) => {
         try {
             await AsyncStorage.setItem(FOOTER_SETTINGS_KEY, JSON.stringify(obj));
-            this.listeners.forEach((item) => { item.update(obj) });
+            this.listeners.forEach((item) => { item.update?.(obj) });
         } catch (error) {
             console.log('updateFooterSettingsError', error);
         }

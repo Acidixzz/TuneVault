@@ -4,21 +4,36 @@ import { Ionicons, createIconSetFromFontello, Entypo, FontAwesome5 } from '@expo
 import { Context } from '../../ContextProvider';
 import { PanGestureHandler, Swipeable, } from 'react-native-gesture-handler';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-
+import * as SQLite from 'expo-sqlite';
 
 const SongComponent = forwardRef((props, ref) => {
-  //console.log(item);
-  const [isPressed, setIsPressed] = useState(false);
+
+  const db = SQLite.openDatabaseSync('TuneVault.db');
+
   const [isSettingsPressed, setIsSettingsPressed] = useState(false);
   const { ah, sh } = useContext(Context);
 
-  const { item, songs, showEllipsis = false, settingFunc = null, } = props;
+  const { item, songs, showEllipsis = false, settingFunc = null, toastHandler, shuffle } = props;
   const swipeRef = useRef(null);
   const [background, setBackground] = useState(false);
 
+
+  const playSongs = async (shuffle) => {
+    await db.withExclusiveTransactionAsync(async (txn) => {
+      let SELECT = [];
+      if (shuffle && ah?.curRow !== item) {
+        SELECT = await txn.getAllAsync(`SELECT * FROM songs ORDER BY RANDOM();`);
+        console.log(SELECT.map(item => item.NAME));
+      } else {
+        SELECT = songs;
+      }
+
+      ah.setCurNextPrev(item, SELECT, false);
+    });
+    sh.listeners.forEach((item) => item.shuffle?.(shuffle));
+  }
+
   const left = (progress, dragX) => {
-
-
     return (
       <Animated.View style={[styles.addQueue]}>
         {background ?
@@ -30,7 +45,6 @@ const SongComponent = forwardRef((props, ref) => {
     )
   }
 
-
   return (
     <Swipeable
       ref={swipeRef}
@@ -41,17 +55,18 @@ const SongComponent = forwardRef((props, ref) => {
       onSwipeableWillOpen={(direction) => {
         if (direction === 'left') {
           ah.addToQueue(item);
-          setTimeout(() => {
-            setBackground(true);
-            swipeRef.current.close();
-          }, 25)
+          toastHandler(),
+            setTimeout(() => {
+              setBackground(true);
+              swipeRef.current.close();
+            }, 25)
         }
       }
       }
       onSwipeableClose={() => setBackground(false)}
       dragOffsetFromLeftEdge={30}
     >
-      <TouchableHighlight activeOpacity={0.5} underlayColor={'#000000'} disabled={!showEllipsis} style={[styles.pressable, { backgroundColor: '#17171700', }]} onPress={() => { ah ? ah.setCurNextPrev(item, songs) : console.log('ah not loaded') }} >
+      <TouchableHighlight activeOpacity={0.5} underlayColor={'#000000'} disabled={!showEllipsis} style={[styles.pressable, { backgroundColor: '#17171700', }]} onPress={() => { ah ? playSongs(shuffle) : console.log('ah not loaded') }} >
         <View style={{ flexDirection: 'row', backgroundColor: showEllipsis ? '#121212' : '#12121200' }}>
           <View style={{ width: '20%', alignItems: 'center', justifyContent: 'center', height: 70 }}>
             <View style={{ height: 50, width: 50, backgroundColor: 'white', }} />
