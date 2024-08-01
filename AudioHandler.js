@@ -81,11 +81,19 @@ export default class AudioHandler {
 
             this.nextRow = this.curRow;
             this.curRow = this.prevRow;
+
+            console.log('cur:', this.curRow, 'next:', this.nextRow);
+
             if (this.listeners) {
                 this.listeners.forEach(item => {
                     item.update(this.curRow);
                     item.updateIsPlaying(true);
                 });
+            }
+
+            if (this.queue.length === 0) {
+                await this.next.unloadAsync();
+                await this.next.loadAsync({ uri: this.nextRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 })
             }
 
             this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);
@@ -114,6 +122,12 @@ export default class AudioHandler {
             }
 
             if (this.queue.length > 0) {
+                if (this.prevRow !== this.curRow) {
+                    this.prevRow = this.curRow; //so then when they click previous it goes the song last played in the actual playlist order before the queue songs started
+                    await this.prev.unloadAsync();
+                    await this.prev.loadAsync({ uri: this.prevRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 })
+                }
+
                 await this.cur.unloadAsync();
                 await this.cur.loadAsync({ uri: this.queue[0].FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
 
@@ -148,6 +162,11 @@ export default class AudioHandler {
                     item.update(this.curRow);
                     item.updateIsPlaying(true);
                 });
+            }
+
+            if (this.queue.length === 0) {
+                await this.prev.unloadAsync();
+                await this.prev.loadAsync({ uri: this.prevRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 })
             }
 
             this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);

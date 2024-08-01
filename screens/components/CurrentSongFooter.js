@@ -10,6 +10,7 @@ import { FOOTER_SETTINGS_KEY } from '../../SettingsHandler';
 import { Slider } from '@miblanchard/react-native-slider';
 import TextTicker from 'react-native-text-ticker';
 import * as SQLite from 'expo-sqlite';
+import { AVPlaybackStatusSuccess } from 'expo-av';
 
 const CurrentSongFooter = () => {
     //console.log(item);
@@ -199,10 +200,15 @@ const CurrentSongFooter = () => {
     }
 
     const setPosition = async () => {
-        if (ah.cur._loaded) {
-            await ah.cur.setPositionAsync(Math.round(toChange * curDuration));
+        try {
+            if (ah.cur._loaded) {
+                res = await ah.cur.setPositionAsync(Math.round(toChange * curDuration));
+                setProgress(res.positionMillis / curDuration);
+            }
+            setSliding(false);
+        } catch (error) {
+            console.log('setPositionError:', error);
         }
-        setSliding(false);
     }
 
     return name && (
@@ -233,7 +239,7 @@ const CurrentSongFooter = () => {
                 activeOpacity={1}
                 onLongPress={() => { setLong('#005982'); setOpenSoundbar(!openSoundbar); }}
                 onPress={() => console.log(ah)}
-                onPressIn={() => { setLong('#0f0f0f') }}
+                onPressIn={() => { setLong('#0b0b0b') }}
                 onPressOut={() => { setLong('#005982') }}
                 style={[styles.button, { backgroundColor: long }]}
             >

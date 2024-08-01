@@ -1,9 +1,9 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, Alert, StyleSheet, Text, View, TouchableOpacity, Pressable, SafeAreaView, TouchableWithoutFeedback, Animated, Easing } from 'react-native';
+import { Modal, Alert, StyleSheet, Text, View, TouchableOpacity, Pressable, SafeAreaView, TouchableWithoutFeedback, Animated, Easing, TouchableHighlight } from 'react-native';
 import * as DocumentPicker from "expo-document-picker";
 import * as MediaLibrary from "expo-media-library";
 import SongComponent from './components/SongComponent';
-import { Ionicons, createIconSetFromFontello, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, createIconSetFromFontello, MaterialIcons, Entypo, Feather } from '@expo/vector-icons';
 import * as SQLite from 'expo-sqlite';
 import { Context } from '../ContextProvider';
 import * as FileSystem from 'expo-file-system';
@@ -239,19 +239,25 @@ export default function Songs() {
         backgroundStyle={{ backgroundColor: '#222222' }}
         handleIndicatorStyle={{ backgroundColor: '#777777', width: 50 }}
       >
-        <BottomSheetScrollView style={{ backgroundColor: '#222222' }}>
+        <BottomSheetScrollView style={{ backgroundColor: '#222222', width: '100%' }}>
           <View style={{ flex: 1, marginTop: '1%' }}>
             <SongComponent item={curSongForSettings} ref={songSettingsRef}></SongComponent>
-            <View style={{ borderBottomColor: '#666666', borderBottomWidth: 1, width: 400, marginTop: '3.15%' }}></View>
-            <TouchableOpacity style={[styles.button, { width: '100%' }]} onPress={() => { songSettingsRef.current?.close(); toastHandler(); ah.addToQueue(curSongForSettings); }}>
-              <Text style={styles.modalText}>Add to queue</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, { width: '100%' }]} onPress={() => { songSettingsRef.current?.close(); deleteRows(curSongForSettings?.NAME, curSongForSettings?.SONG_GU); }}>
-              <Text style={styles.modalText}>Remove</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, { width: '100%' }]} onPress={() => songSettingsRef.current?.close()}>
+            <View style={{ backgroundColor: '#666666', height: 0.25, width: 400, marginVertical: '3%', zIndex: 2 }} />
+            <TouchableHighlight underlayColor={'#000000'} style={[styles.button, { width: '100%', flexDirection: 'row', alignItems: 'center' }]} onPress={() => { songSettingsRef.current?.close(); toastHandler(); ah.addToQueue(curSongForSettings); }}>
+              <>
+                <Entypo style={{ marginEnd: '5%' }} name="add-to-list" size={26} color="#959595" />
+                <Text style={styles.modalText}>Add to queue</Text>
+              </>
+            </TouchableHighlight>
+            <TouchableHighlight underlayColor={'#000000'} style={[styles.button, { width: '100%', flexDirection: 'row', alignItems: 'center' }]} onPress={() => { songSettingsRef.current?.close(); deleteRows(curSongForSettings?.NAME, curSongForSettings?.SONG_GU); }}>
+              <>
+                <Feather style={{ marginEnd: '5%' }} name="minus-circle" size={26} color="#959595" />
+                <Text style={styles.modalText}>Remove</Text>
+              </>
+            </TouchableHighlight>
+            {/* <TouchableHighlight underlayColor={'#000000'} style={[styles.button, { width: '100%', flexDirection: 'row' }]} onPress={() => songSettingsRef.current?.close()}>
               <Text style={styles.modalText}>Close</Text>
-            </TouchableOpacity>
+            </TouchableHighlight> */}
           </View>
         </BottomSheetScrollView>
       </BottomSheetModal>
@@ -291,10 +297,8 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   button: {
-    margin: 5,
-    borderRadius: 20,
-    padding: 10,
-    width: 150,
+    paddingHorizontal: 15,
+    paddingVertical: 15,
   },
   buttonColor: {
     shadowColor: '#17b6ff'
@@ -305,8 +309,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   modalText: {
-    fontSize: 15,
-    textAlign: 'center',
+    fontSize: 18,
+    textAlign: 'left',
     color: 'white',
   },
   add: {
