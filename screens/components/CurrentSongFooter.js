@@ -256,7 +256,7 @@ const CurrentSongFooter = () => {
                         </View>
                         <View style={{ flexDirection: 'column', marginStart: '5%', justifyContent: 'center', height: 40, width: 300 - 45 * numberOfButtons, }}>
                             <TextTicker ref={textRef} style={{ color: 'white', fontSize: 12, marginBottom: 5, }} animationType='bounce' bounceDelay={2000} bounceSpeed={100} bouncePadding={{ left: 0, right: 0 }}>{curSong.NAME}</TextTicker>
-                            <Text style={{ color: '#c4c4c4', fontSize: 12 }}>{curSong.ARTIST}</Text>
+                            <Text style={{ color: '#c4c4c4', fontSize: 12 }} numberOfLines={1}>{curSong.ARTIST}</Text>
                         </View>
                     </View>
 
