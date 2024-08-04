@@ -1,24 +1,29 @@
-import { Pressable, StyleSheet, Text, TouchableOpacity, View, Animated, Easing } from 'react-native';
+//<Imports>
+
+//React
+import { Pressable, StyleSheet, Text, TouchableOpacity, View, Animated, Easing, Image } from 'react-native';
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { FontAwesome6, Entypo } from '@expo/vector-icons';
-import { Context } from '../../ContextProvider';
 import { ProgressBar } from 'react-native-paper';
-import { albumNeedsMigrationAsync } from 'expo-media-library';
-import { err } from 'react-native-svg';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FOOTER_SETTINGS_KEY } from '../../SettingsHandler';
-import { Slider } from '@miblanchard/react-native-slider';
 import TextTicker from 'react-native-text-ticker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Slider } from '@miblanchard/react-native-slider';
+
+//Expo
+import { FontAwesome6, Entypo } from '@expo/vector-icons';
 import * as SQLite from 'expo-sqlite';
-import { AVPlaybackStatusSuccess } from 'expo-av';
+
+//Internal
+import { Context } from '../../util/ContextProvider';
+import { FOOTER_SETTINGS_KEY } from '../../util/SettingsHandler';
+
+//</Imports>
+
 
 const CurrentSongFooter = () => {
     //console.log(item);
     const db = SQLite.openDatabaseSync('TuneVault.db');
 
     const { ah, sh } = useContext(Context);
-    const [name, setName] = useState('');
-    const [artist, setArtist] = useState('');
     const [curSong, setCurSong] = useState('');
     const [progress, setProgress] = useState(0);
     const [isPlaying, setIsPlaying] = useState(true);
@@ -52,8 +57,6 @@ const CurrentSongFooter = () => {
     useEffect(() => {
         ah.listeners.push({
             update: (data) => {
-                setName(data?.NAME);
-                setArtist(data?.ARTIST);
                 setCurSong(data);
             },
             updateProgress: (num) => setProgress(num),
@@ -80,7 +83,7 @@ const CurrentSongFooter = () => {
             }
             getDuration();
         }
-    }, [name]);
+    }, [curSong]);
 
     useEffect(() => {
         if (openSoundbar) {
@@ -93,7 +96,7 @@ const CurrentSongFooter = () => {
             }).start();
             Animated.timing(popUpHeight, {
                 toValue: 130,
-                duration: 250,
+                duration: 400,
                 easing: Easing.inOut(Easing.quad),
                 useNativeDriver: false,
             }).start(() => { setAnimationComplete(true) });
@@ -109,7 +112,7 @@ const CurrentSongFooter = () => {
                 setAnimationComplete(false);
                 Animated.timing(popUpHeight, {
                     toValue: 50,
-                    duration: 250,
+                    duration: 400,
                     easing: Easing.inOut(Easing.quad),
                     useNativeDriver: false,
                 }).start();
@@ -211,7 +214,7 @@ const CurrentSongFooter = () => {
         }
     }
 
-    return name && (
+    return ah.cur._loaded && (
         <>
             <Animated.View style={[styles.popup, { height: popUpHeight, backgroundColor: long, }]}>
                 <Animated.View style={{ width: '95%', marginStart: '2.5%', marginTop: '2.5%', opacity: opacitySlider }}>
@@ -238,19 +241,22 @@ const CurrentSongFooter = () => {
             <TouchableOpacity
                 activeOpacity={1}
                 onLongPress={() => { setLong('#005982'); setOpenSoundbar(!openSoundbar); }}
-                onPress={() => console.log(ah)}
+                onPress={() => console.log(curSong)}
                 onPressIn={() => { setLong('#0b0b0b') }}
                 onPressOut={() => { setLong('#005982') }}
                 style={[styles.button, { backgroundColor: long }]}
             >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <View style={styles.songContainer}>
-                        <View style={{ height: 40, width: 40, backgroundColor: 'white', borderRadius: 5, marginStart: '5%' }}>
+                        <View style={{
+                            height: 40, width: 40, backgroundColor: 'white', borderRadius: 5, marginStart: '5%', shadowColor: '#000000', shadowOpacity: .25, shadowOffset: [0, 0],
+                        }}>
                             {/* Thumbnail image goes here */}
+                            {!!curSong.PICTURE && (<Image source={{ uri: `data:image/png;base64,${curSong.PICTURE}` }} style={{ width: 40, height: 40, borderRadius: 5 }} />)}
                         </View>
                         <View style={{ flexDirection: 'column', marginStart: '5%', justifyContent: 'center', height: 40, width: 300 - 45 * numberOfButtons, }}>
-                            <TextTicker ref={textRef} style={{ color: 'white', fontSize: 12, marginBottom: 5, }} animationType='bounce' bounceDelay={2000} bounceSpeed={100} bouncePadding={{ left: 0, right: 0 }}>{name}</TextTicker>
-                            <Text style={{ color: '#c4c4c4', fontSize: 12 }}>{artist}</Text>
+                            <TextTicker ref={textRef} style={{ color: 'white', fontSize: 12, marginBottom: 5, }} animationType='bounce' bounceDelay={2000} bounceSpeed={100} bouncePadding={{ left: 0, right: 0 }}>{curSong.NAME}</TextTicker>
+                            <Text style={{ color: '#c4c4c4', fontSize: 12 }}>{curSong.ARTIST}</Text>
                         </View>
                     </View>
 

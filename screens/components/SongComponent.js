@@ -1,10 +1,22 @@
-import { Dimensions, Easing, Pressable, StyleSheet, Text, View, TouchableOpacity, TouchableHighlight } from 'react-native';
-import React, { useState, useContext, forwardRef, useEffect, useRef } from 'react';
-import { Ionicons, createIconSetFromFontello, Entypo, FontAwesome5 } from '@expo/vector-icons';
-import { Context } from '../../ContextProvider';
+//<Imports>
+
+//React
+import React, { useState, useContext, forwardRef, useEffect, useRef, } from 'react';
+import { Dimensions, Easing, Pressable, StyleSheet, Text, View, TouchableOpacity, TouchableHighlight, Image } from 'react-native';
 import { PanGestureHandler, Swipeable, } from 'react-native-gesture-handler';
 import Animated, { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+
+//Expo
+import { Ionicons, createIconSetFromFontello, Entypo, FontAwesome5 } from '@expo/vector-icons';
 import * as SQLite from 'expo-sqlite';
+
+//Internal
+import { Context } from '../../util/ContextProvider';
+
+//</Imports>
+
+
+
 
 const SongComponent = forwardRef((props, ref) => {
 
@@ -14,6 +26,7 @@ const SongComponent = forwardRef((props, ref) => {
   const { ah, sh } = useContext(Context);
 
   const { item, songs, showEllipsis = false, settingFunc = null, toastHandler, shuffle } = props;
+
   const swipeRef = useRef(null);
   const [background, setBackground] = useState(false);
 
@@ -66,11 +79,14 @@ const SongComponent = forwardRef((props, ref) => {
       onSwipeableClose={() => setBackground(false)}
       dragOffsetFromLeftEdge={30}
     >
-      <TouchableHighlight activeOpacity={0.5} underlayColor={'#000000'} disabled={!showEllipsis} style={[styles.pressable, { backgroundColor: '#17171700', }]} onPress={() => { ah ? playSongs(shuffle) : console.log('ah not loaded') }} >
+      <TouchableHighlight activeOpacity={0.5} underlayColor={'#000000'} disabled={!showEllipsis} style={[styles.pressable, { backgroundColor: '#17171700', }]} onPress={() => { ah ? playSongs(shuffle) : console.log('ah not loaded'); }} >
         <View style={{ flexDirection: 'row', backgroundColor: showEllipsis ? '#121212' : '#12121200' }}>
           <View style={{ width: '20%', alignItems: 'center', justifyContent: 'center', height: 70 }}>
-            <View style={{ height: 50, width: 50, backgroundColor: 'white', }} />
             {/* Thumbnail image goes here */}
+            {!!item.PICTURE ?
+              (<Image source={{ uri: `data:image/png;base64,${item.PICTURE}` }} style={{ width: 50, height: 50 }} />)
+              :
+              (<View style={{ height: 50, width: 50, backgroundColor: 'white', }} />)}
           </View>
 
           <View style={{ flexDirection: 'column', width: '65%', justifyContent: 'center' }}>

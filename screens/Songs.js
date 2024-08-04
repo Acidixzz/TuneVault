@@ -1,20 +1,29 @@
+//<Imports>
+
+//React
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Alert, StyleSheet, Text, View, TouchableOpacity, Pressable, SafeAreaView, TouchableWithoutFeedback, Animated, Easing, TouchableHighlight } from 'react-native';
-import * as DocumentPicker from "expo-document-picker";
-import * as MediaLibrary from "expo-media-library";
-import SongComponent from './components/SongComponent';
-import { Ionicons, createIconSetFromFontello, MaterialIcons, Entypo, Feather } from '@expo/vector-icons';
-import * as SQLite from 'expo-sqlite';
-import { Context } from '../ContextProvider';
-import * as FileSystem from 'expo-file-system';
-import { LinearGradient } from 'expo-linear-gradient';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { ScrollView } from 'react-native-gesture-handler';
 import { useNotificationController } from 'react-native-notificated';
-import { notify } from '../ContextProvider';
-import { Sound } from 'expo-av/build/Audio';
 
-export default function Songs() {
+//Expo
+import * as DocumentPicker from "expo-document-picker";
+import * as MediaLibrary from "expo-media-library";
+import { Ionicons, createIconSetFromFontello, MaterialIcons, Entypo, Feather } from '@expo/vector-icons';
+
+import * as SQLite from 'expo-sqlite';
+import * as FileSystem from 'expo-file-system';
+import { LinearGradient } from 'expo-linear-gradient';
+//Internal
+import EditInfo from './EditInfo';
+import { Context, notify } from '../util/ContextProvider';
+import SongComponent from './components/SongComponent';
+import emitter, { UPDATE_SONG } from '../util/EventEmitter';
+
+//</Imports>
+
+const Songs = ({ navigation }) => {
   const db = SQLite.openDatabaseSync('TuneVault.db');
   const { ah, sh } = useContext(Context);
   const [songs, setSongs] = useState([]);
@@ -37,6 +46,9 @@ export default function Songs() {
     (props) => <BottomSheetBackdrop appearsOnIndex={0} disappearsOnIndex={-1} opacity={0.8}{...props} />,
     []
   );
+  //variable to show the elipsis bottomsheet
+  const songEditRef = useRef(null);
+  const editSnapPoints = useMemo(() => ['95%'], []);
 
   //current item for setting popup
   const [curSongForSettings, setCurSongForSettings] = useState(null);
@@ -44,38 +56,45 @@ export default function Songs() {
   useEffect(() => {
 
     const fetchSongs = async () => {
-      await db.withExclusiveTransactionAsync(async (txn) => {
-        await txn.execAsync('CREATE TABLE IF NOT EXISTS songs (SONG_GU TEXT PRIMARY KEY, NAME TEXT NOT NULL, ARTIST TEXT, FILE_PATH TEXT NOT NULL, PICTURE BLOB, DATE_ADDED TEXT NOT NULL)');
-      });
+      try {
 
-      await db.withExclusiveTransactionAsync(async (txn) => {
-        const SELECT = await txn.getAllAsync('SELECT * FROM songs');
-        setSongs(SELECT);
-        //console.log(query);
-        ah.songs = SELECT;
-      });
+        await db.withExclusiveTransactionAsync(async (txn) => {
+          await txn.execAsync('CREATE TABLE IF NOT EXISTS songs (SONG_GU TEXT PRIMARY KEY, NAME TEXT NOT NULL, ARTIST TEXT, FILE_PATH TEXT NOT NULL, PICTURE TEXT, DATE_ADDED TEXT NOT NULL)');
+        });
+
+        await db.withExclusiveTransactionAsync(async (txn) => {
+          const SELECT = await txn.getAllAsync('SELECT * FROM songs');
+          setSongs(SELECT);
+          //console.log(query);
+          ah.songs = SELECT;
+        });
+      } catch (error) {
+        console.log('select', error);
+      }
     }
     fetchSongs();
     sh.listeners.push({
       openSoundbar: setOpenSoundbar,
       shuffle: setShuffle
     });
+
+    emitter.addListener(UPDATE_SONG, updateRows);
   }, []);
 
   useEffect(() => {
     if (openSoundbar) {
       Animated.timing(scrollHeight, {
         toValue: 200,
-        duration: 250,
-        easing: Easing.linear,
+        duration: 400,
+        easing: Easing.inOut(Easing.quad),
         useNativeDriver: false,
       }).start();
     } else {
       setTimeout(() => {
         Animated.timing(scrollHeight, {
           toValue: 125,
-          duration: 250,
-          easing: Easing.linear,
+          duration: 400,
+          easing: Easing.inOut(Easing.quad),
           useNativeDriver: false,
         }).start();
       }, 50);
@@ -124,16 +143,16 @@ export default function Songs() {
     try {
       const values = [];
       if (files.assets != null) {
-        let query = 'INSERT INTO songs (SONG_GU, NAME, ARTIST, FILE_PATH, DATE_ADDED) VALUES ';
+        let query = 'INSERT INTO songs (SONG_GU, NAME, ARTIST, FILE_PATH, PICTURE, DATE_ADDED) VALUES ';
         let index = 0
         for (const file of files.assets) {
-          query += `(${Array(5).fill('?').join(', ')})`;
+          query += `(${Array(6).fill('?').join(', ')})`;
           if (index < files.assets.length - 1) {
             query += ', ';
           }
           let gu = generateRandomGUID();
           await FileSystem.copyAsync({ from: file.uri, to: FileSystem.documentDirectory + gu + file.name });
-          values.push(...[gu, file.name, 'Juice WRLD', FileSystem.documentDirectory + gu + file.name, new Date().toISOString()]);
+          values.push(...[gu, file.name, 'Juice WRLD', FileSystem.documentDirectory + gu + file.name, null, new Date().toISOString()]);
           index++;
         }
 
@@ -153,16 +172,15 @@ export default function Songs() {
     }
   }
 
-  const deleteRows = async (name, guid) => {
+  const deleteRows = async (song) => {
     try {
       db.withExclusiveTransactionAsync(async (txn) => {
-        await txn.runAsync('DELETE FROM songs WHERE SONG_GU == ?', guid);
+        await txn.runAsync('DELETE FROM songs WHERE SONG_GU == ?', song.SONG_GU);
         await ah.reset();
-        await FileSystem.deleteAsync(FileSystem.documentDirectory + guid + name);
+        await FileSystem.deleteAsync(song.FILE_PATH);
 
         const SELECT = await txn.getAllAsync('SELECT * FROM songs');
         setSongs(SELECT);
-        console.log(SELECT);
         if (SELECT) {
           ah.setCurNextPrev(SELECT[0], SELECT);
         }
@@ -172,7 +190,51 @@ export default function Songs() {
     }
   }
 
-  function generateRandomGUID() {
+  const updateRows = async (name, artist, image, gu) => {
+    try {
+      const columns = [];
+      const values = [];
+      const newCurRow = { ...ah.curRow };
+
+      if (!!name) {
+        columns.push('NAME = ?');
+        values.push(name);
+        newCurRow.NAME = name;
+      }
+
+      if (!!artist) {
+        columns.push('ARTIST = ?');
+        values.push(artist);
+        newCurRow.ARTIST = artist;
+      }
+
+      //no checker because we want to be able to remove the picture as well
+      columns.push('PICTURE = ?');
+      values.push(!!image ? image : null);
+      newCurRow.PICTURE = !!image ? image : null;
+
+      values.push(gu);
+      console.log(columns);
+
+      if (columns.length > 0) {
+        await db.withExclusiveTransactionAsync(async (txn) => {
+          await txn.runAsync(`UPDATE songs SET ${columns.join(', ')} WHERE SONG_GU == ?`, values);
+        });
+
+        await db.withExclusiveTransactionAsync(async (txn) => {
+          const SELECT = await txn.getAllAsync('SELECT * FROM songs');
+          setSongs(SELECT);
+          if (SELECT) {
+            ah.setCurNextPrev(newCurRow, SELECT, true);
+          }
+        });
+      }
+    } catch (error) {
+      console.log('updateRowsError:', error);
+    }
+  }
+
+  const generateRandomGUID = () => {
     // Generate a random hexadecimal string (8 characters)
     try {
       const randomHex = () => Math.floor(Math.random() * 0x10000).toString(16).padStart(4, '0');
@@ -209,7 +271,7 @@ export default function Songs() {
 
 
       <View style={styles.headerContainer}>
-        <Text style={{ ...styles.textStyle, fontSize: 40, textAlign: 'center', }}>Songs</Text>
+        <Text style={{ ...styles.textBoldStyle, fontSize: 40, textAlign: 'center', }}>Songs</Text>
 
         <TouchableOpacity onPress={pickMultipleSongs} style={styles.add}>
           <MaterialIcons name="add" size={36} color="black" />
@@ -217,7 +279,7 @@ export default function Songs() {
       </View>
 
       <LinearGradient colors={['#0e0e0e', '#12121200']} style={styles.graadientBackground} />
-      <ScrollView style={{ width: '100%', maxHeight: '100%' }} ref={scrollRef}>
+      <ScrollView style={{ width: '100%', maxHeight: '100%', backgroundColor: "#121212" }} ref={scrollRef}>
         {songs.map((item, index) => (
           <View key={index}>
             <View style={[{ flexDirection: 'row', marginTop: index == 0 ? '2%' : 0 }]}>
@@ -249,7 +311,13 @@ export default function Songs() {
                 <Text style={styles.modalText}>Add to queue</Text>
               </>
             </TouchableHighlight>
-            <TouchableHighlight underlayColor={'#000000'} style={[styles.button, { width: '100%', flexDirection: 'row', alignItems: 'center' }]} onPress={() => { songSettingsRef.current?.close(); deleteRows(curSongForSettings?.NAME, curSongForSettings?.SONG_GU); }}>
+            <TouchableHighlight underlayColor={'#000000'} style={[styles.button, { width: '100%', flexDirection: 'row', alignItems: 'center' }]} onPress={() => { songSettingsRef.current.close(); setTimeout(() => { songEditRef.current.present() }, 500) }}>
+              <>
+                <Feather style={{ marginEnd: '5%' }} name="edit" size={26} color="#959595" />
+                <Text style={styles.modalText}>Edit song information</Text>
+              </>
+            </TouchableHighlight>
+            <TouchableHighlight underlayColor={'#000000'} style={[styles.button, { width: '100%', flexDirection: 'row', alignItems: 'center' }]} onPress={() => { songSettingsRef.current?.close(); deleteRows(curSongForSettings); }}>
               <>
                 <Feather style={{ marginEnd: '5%' }} name="minus-circle" size={26} color="#959595" />
                 <Text style={styles.modalText}>Remove</Text>
@@ -261,9 +329,28 @@ export default function Songs() {
           </View>
         </BottomSheetScrollView>
       </BottomSheetModal>
+
+      <BottomSheetModal
+        ref={songEditRef}
+        snapPoints={editSnapPoints}
+        index={0}
+        key={'EditSongInfo'}
+        name={'EditSongInfo'}
+        enableDismissOnClose={true}
+        backdropComponent={renderBackdrop}
+        backgroundStyle={{ backgroundColor: '#1c1c1c', }}
+        handleIndicatorStyle={{ backgroundColor: '#777777', width: 50 }}
+        handleComponent={() => (
+          <View style={{ height: 0 }} />
+        )}
+      >
+        <EditInfo ref={songEditRef} song={curSongForSettings} />
+      </BottomSheetModal>
     </SafeAreaView >
   );
 }
+
+export default Songs;
 
 const styles = StyleSheet.create({
   headerContainer: {
@@ -280,6 +367,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: '17.5%',
     height: 10,
+    zIndex: 2
   },
   centeredView: {
     flex: 1,
@@ -303,9 +391,13 @@ const styles = StyleSheet.create({
   buttonColor: {
     shadowColor: '#17b6ff'
   },
-  textStyle: {
+  textBoldStyle: {
     color: 'white',
     fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  textStyle: {
+    color: 'white',
     textAlign: 'center',
   },
   modalText: {
@@ -324,9 +416,7 @@ const styles = StyleSheet.create({
     shadowColor: '#17b6ff',
     borderRadius: 45,
     marginStart: '0%'
-
   },
-
   touchableRow: {
     marginHorizontal: 5,
     padding: 10,

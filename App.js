@@ -1,17 +1,28 @@
-import { StyleSheet, Text, View, TouchableOpacity, Pressable } from 'react-native';
-import { Library, Songs, Settings } from './screens';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import 'react-native-gesture-handler';
+//<Imports>
+
+//React
 import { createContext, useEffect, useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ContextProvider } from './ContextProvider';
-import CurrentSongFooter from './screens/components/CurrentSongFooter';
+import { StyleSheet, Text, View, TouchableOpacity, Pressable } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { NotificationsProvider } from './ContextProvider';
+
+//Expo
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+
+//Internal
+import { Library, Songs, Settings } from './screens';
+import { ContextProvider } from './util/ContextProvider';
+import CurrentSongFooter from './screens/components/CurrentSongFooter';
+import { NotificationsProvider } from './util/ContextProvider';
+import EditInfo from './screens/EditInfo';
+
+//</Imports>
+
+
 
 const Tab = createBottomTabNavigator();
 

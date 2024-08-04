@@ -203,7 +203,7 @@ export default class AudioHandler {
 
     setCurNextPrev = async (cur, songs, fromFooter = false) => {
         try {
-            if (this.cur._loaded && this.curRow === cur && !fromFooter) {
+            if (this.cur._loaded && this.curRow.SONG_GU === cur.SONG_GU && !fromFooter) {
                 return;
             }
 

@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { err } from 'react-native-svg';
 
 export const FOOTER_SETTINGS_KEY = 'FOOTER_SETTINGS';
 

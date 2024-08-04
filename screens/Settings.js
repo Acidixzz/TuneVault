@@ -1,19 +1,20 @@
+//<Imports>
+
+//React
 import React, { useContext, useEffect, useState } from 'react';
 import { Modal, Alert, StyleSheet, Text, View, TouchableOpacity, Pressable, FlatList, SafeAreaView, TouchableWithoutFeedback, ScrollView } from 'react-native';
-import * as DocumentPicker from "expo-document-picker";
-import * as MediaLibrary from "expo-media-library";
-import SongComponent from './components/SongComponent';
-import { Ionicons, createIconSetFromFontello, MaterialIcons } from '@expo/vector-icons';
-import * as SQLite from 'expo-sqlite';
-import AudioHandler from '../AudioHandler';
-import { Audio } from "expo-av";
-import { Context } from '../ContextProvider';
-import * as FileSystem from 'expo-file-system';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Switch } from 'react-native-paper';
+
+//Expo
+import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome6 } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FOOTER_SETTINGS_KEY } from '../SettingsHandler'
+
+//Internal
+import { Context } from '../util/ContextProvider';
+
+//</Imports>
+
+
 
 
 export default function Settings() {
