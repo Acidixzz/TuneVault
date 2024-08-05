@@ -142,10 +142,10 @@ const CurrentSongFooter = () => {
 
     useEffect(() => {
         let num = 0;
-        if (footerSettings.shuffle) num += 1;
-        if (footerSettings.previous) num += 1;
-        if (footerSettings.play) num += 1;
-        if (footerSettings.next) num += 1;
+        if (footerSettings?.shuffle) num += 1;
+        if (footerSettings?.previous) num += 1;
+        if (footerSettings?.play) num += 1;
+        if (footerSettings?.next) num += 1;
         setNumberOfButtons(num);
         setDisabledBounceAnimation(textRef.current?.textWidth < 300 - 45 * num);
     }, [footerSettings])
@@ -172,7 +172,7 @@ const CurrentSongFooter = () => {
 
             ah.setCurNextPrev(curSong, SELECT, true);
         });
-        sh.listeners.forEach((item) => item.shuffle?.(shuffle));
+        sh.listeners.forEach((item) => item?.shuffle?.(shuffle));
     }
 
     const handlePausePlay = () => {
@@ -262,20 +262,20 @@ const CurrentSongFooter = () => {
 
                     <View style={[styles.buttonContainer]}>
 
-                        {footerSettings.shuffle && (
+                        {footerSettings?.shuffle && (
                             <TouchableOpacity style={[styles.vectorButton, { justifyContent: 'center', alignItems: 'center' }]} onPress={() => { setAllShuffles(!shuffle) }} activeOpacity={0.6}>
                                 <FontAwesome6 name="shuffle" size={30} color="white" />
                                 {shuffle && (<Entypo style={{ marginVertical: '-25%', marginRight: 3 }} name="dot-single" size={24} color="white" />)}
                             </TouchableOpacity>
                         )}
 
-                        {footerSettings.previous && (
+                        {footerSettings?.previous && (
                             <TouchableOpacity style={styles.vectorButton} onPress={() => { ah?.playPrev(ah?.songs) }} activeOpacity={0.6}>
                                 <FontAwesome6 name="backward" size={30} color="white" />
                             </TouchableOpacity>
                         )}
 
-                        {footerSettings.play && (
+                        {footerSettings?.play && (
                             <View style={[styles.vectorButton, { justifyContent: 'center', alignItems: 'center', width: '23%', }]}>
                                 <TouchableOpacity onPress={handlePausePlay} activeOpacity={0.6}>
                                     {isPlaying ?
@@ -287,7 +287,7 @@ const CurrentSongFooter = () => {
                             </View>
                         )}
 
-                        {footerSettings.next && (
+                        {footerSettings?.next && (
                             <TouchableOpacity style={styles.vectorButton} onPress={() => { ah?.playNext(ah?.songs) }} activeOpacity={0.6}>
                                 <FontAwesome6 name="forward" size={30} color="white" />
                             </TouchableOpacity>

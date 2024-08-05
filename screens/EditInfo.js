@@ -181,9 +181,9 @@ const EditInfo = forwardRef((props, ref) => {
                     [{ resize: { width: 400, height: 400 } }],
                     { compress: 0, format: ImageManipulator.SaveFormat.PNG, base64: true }
                 );
-                emitter.emit(UPDATE_SONG, name !== props.song.NAME ? name : '', artist !== props.song.ARTIST ? artist : '', manipResult.base64, props.song?.SONG_GU);
+                emitter.emit(UPDATE_SONG, props.song, name !== props.song.NAME ? name : '', artist !== props.song.ARTIST ? artist : '', manipResult.base64, props.song?.SONG_GU);
             } else {
-                emitter.emit(UPDATE_SONG, name !== props.song.NAME ? name : '', artist !== props.song.ARTIST ? artist : '', null, props.song?.SONG_GU);
+                emitter.emit(UPDATE_SONG, props.song, name !== props.song.NAME ? name : '', artist !== props.song.ARTIST ? artist : '', null, props.song?.SONG_GU);
             }
             ref.current.close();
         } catch (error) {

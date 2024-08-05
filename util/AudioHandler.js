@@ -30,6 +30,8 @@ export default class AudioHandler {
 
             this.listeners = [] //listener objects that can have functions on them to update ui
 
+            this.justDeleted = false;
+
         } catch (error) {
             console.log("Error initializing AudioHandler: ", error);
         }
@@ -107,6 +109,11 @@ export default class AudioHandler {
 
             this.prev = temp;
             await this.prev.loadAsync({ uri: this.prevRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
+
+            if (this.justDeleted) {
+                this.setCurNextPrev(this.curRow, this.songs, true);
+                this.justDeleted = false;
+            }
         } catch (error) {
             console.log("Error when clicking prev: ", error);
         }
@@ -180,6 +187,11 @@ export default class AudioHandler {
 
             this.next = temp;
             await this.next.loadAsync({ uri: this.nextRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
+
+            // if (this.justDeleted) {
+            //     this.setCurNextPrev(this.curRow, this.songs, true);
+            //     this.justDeleted = false;
+            // }
         } catch (error) {
             console.log("Error when clicking next: ", error);
         }
@@ -246,5 +258,10 @@ export default class AudioHandler {
         } catch (error) {
             console.log('addToQueueError:', error);
         }
+    }
+
+    setSongsAfterDelete = (songs) => {
+        this.songs = songs;
+        this.justDeleted = true;
     }
 }

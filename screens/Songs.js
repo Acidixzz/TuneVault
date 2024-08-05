@@ -164,6 +164,9 @@ const Songs = ({ navigation }) => {
 
           const SELECT = await txn.getAllAsync('SELECT * FROM songs');
           setSongs(SELECT);
+          if (ah.cur._loaded) {
+            ah.setCurNextPrev(ah.curRow, SELECT, true);
+          }
 
         });
       }
@@ -174,44 +177,52 @@ const Songs = ({ navigation }) => {
 
   const deleteRows = async (song) => {
     try {
-      db.withExclusiveTransactionAsync(async (txn) => {
-        await txn.runAsync('DELETE FROM songs WHERE SONG_GU == ?', song.SONG_GU);
-        await ah.reset();
-        await FileSystem.deleteAsync(song.FILE_PATH);
+      emitter.emit(`delete_${song.SONG_GU}`);
+      setTimeout(() => {
+        db.withExclusiveTransactionAsync(async (txn) => {
+          await txn.runAsync('DELETE FROM songs WHERE SONG_GU == ?', song.SONG_GU);
+          await FileSystem.deleteAsync(song.FILE_PATH);
 
-        const SELECT = await txn.getAllAsync('SELECT * FROM songs');
-        setSongs(SELECT);
-        if (SELECT) {
-          ah.setCurNextPrev(SELECT[0], SELECT);
-        }
-      });
+          const SELECT = await txn.getAllAsync('SELECT * FROM songs'); // does not work when shuffled
+          let curIndex = songs.findIndex(item => item.SONG_GU === song.SONG_GU);
+          setSongs(SELECT);
+          if (shuffle) {
+            toastHandler('Shuffle is turned off after deleting a song');
+          }
+          setAllShuffles(false);
+          if (SELECT && ah.cur._loaded) {
+            ah.setCurNextPrev(ah.curRow.SONG_GU === song.SONG_GU ? SELECT[curIndex === SELECT.length ? curIndex - 1 : curIndex] : ah.curRow, SELECT, true);
+            ah.setSongsAfterDelete(SELECT);
+          }
+        });
+      }, 250);
     } catch (error) {
       console.log("Error deleting a song: ", error);
     }
   }
 
-  const updateRows = async (name, artist, image, gu) => {
+  const updateRows = async (songToUpdate, name, artist, image, gu) => {
     try {
       const columns = [];
       const values = [];
-      const newCurRow = { ...ah.curRow };
+      const newUpdateRow = { ...songToUpdate };
 
       if (!!name) {
         columns.push('NAME = ?');
         values.push(name);
-        newCurRow.NAME = name;
+        newUpdateRow.NAME = name;
       }
 
       if (!!artist) {
         columns.push('ARTIST = ?');
         values.push(artist);
-        newCurRow.ARTIST = artist;
+        newUpdateRow.ARTIST = artist;
       }
 
       //no checker because we want to be able to remove the picture as well
       columns.push('PICTURE = ?');
       values.push(!!image ? image : null);
-      newCurRow.PICTURE = !!image ? image : null;
+      newUpdateRow.PICTURE = !!image ? image : null;
 
       values.push(gu);
       console.log(columns);
@@ -225,7 +236,12 @@ const Songs = ({ navigation }) => {
           const SELECT = await txn.getAllAsync('SELECT * FROM songs');
           setSongs(SELECT);
           if (SELECT) {
-            ah.setCurNextPrev(newCurRow, SELECT, true);
+            ah.setCurNextPrev(ah.curRow, SELECT, true);
+          }
+          if (newUpdateRow.SONG_GU === ah.curRow.SONG_GU) {
+            ah.listeners.forEach(item => {
+              item.update(newUpdateRow);
+            });
           }
         });
       }
@@ -254,11 +270,12 @@ const Songs = ({ navigation }) => {
     }
   };
 
-  const toastHandler = () => {
+  const toastHandler = (text) => {
     remove(curToast);
     setCurToast(notify('queue', {
       params: {
-        bottom: ah.cur._loaded ? openSoundbar ? 180 : 110 : 50
+        bottom: ah.cur._loaded ? openSoundbar ? 180 : 110 : 50,
+        text: text,
       },
       config: {
         gestureConfig: { direction: 'x' },
@@ -281,7 +298,7 @@ const Songs = ({ navigation }) => {
       <LinearGradient colors={['#0e0e0e', '#12121200']} style={styles.graadientBackground} />
       <ScrollView style={{ width: '100%', maxHeight: '100%', backgroundColor: "#121212" }} ref={scrollRef}>
         {songs.map((item, index) => (
-          <View key={index}>
+          <View key={item.SONG_GU}>
             <View style={[{ flexDirection: 'row', marginTop: index == 0 ? '2%' : 0 }]}>
               <SongComponent ref={scrollRef} item={item} songs={songs} showEllipsis={true} settingFunc={settingsPopup} toastHandler={toastHandler} shuffle={shuffle} />
             </View>
@@ -305,7 +322,7 @@ const Songs = ({ navigation }) => {
           <View style={{ flex: 1, marginTop: '1%' }}>
             <SongComponent item={curSongForSettings} ref={songSettingsRef}></SongComponent>
             <View style={{ backgroundColor: '#666666', height: 0.25, width: 400, marginVertical: '3%', zIndex: 2 }} />
-            <TouchableHighlight underlayColor={'#000000'} style={[styles.button, { width: '100%', flexDirection: 'row', alignItems: 'center' }]} onPress={() => { songSettingsRef.current?.close(); toastHandler(); ah.addToQueue(curSongForSettings); }}>
+            <TouchableHighlight underlayColor={'#000000'} style={[styles.button, { width: '100%', flexDirection: 'row', alignItems: 'center' }]} onPress={() => { songSettingsRef.current?.close(); toastHandler('Added to Queue'); ah.addToQueue(curSongForSettings); }}>
               <>
                 <Entypo style={{ marginEnd: '5%' }} name="add-to-list" size={26} color="#959595" />
                 <Text style={styles.modalText}>Add to queue</Text>

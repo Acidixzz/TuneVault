@@ -35,12 +35,12 @@ export const { NotificationsProvider, notify, ...events } = createNotifications(
   duration: 1500,
   variants: {
     queue: {
-      component: ({ bottom }) => {
+      component: ({ bottom, text }) => {
         const { remove } = useNotificationController();
 
         return (
           <TouchableOpacity activeOpacity={1} style={{ height: 50, width: '100%', borderRadius: 10, backgroundColor: 'white', bottom: bottom, justifyContent: 'center', }} onPress={() => { remove() }}>
-            <Text style={{ color: 'black', textAlign: 'left', textAlignVertical: 'center', marginStart: 20 }}>Added to Queue</Text>
+            <Text style={{ color: 'black', textAlign: 'left', textAlignVertical: 'center', marginStart: 20 }}>{text}</Text>
           </TouchableOpacity>
         )
       },
