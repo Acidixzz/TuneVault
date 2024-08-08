@@ -31,7 +31,7 @@ export default class AudioHandler {
             this.listeners = [] //listener objects that can have functions on them to update ui
 
             this.justDeleted = false;
-            this.queueJustEnded = false;
+            this.queueJustEnded = false; //added for bug fixes
 
         } catch (error) {
             console.log("Error initializing AudioHandler: ", error);
