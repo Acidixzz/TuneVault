@@ -201,7 +201,7 @@ const Songs = ({ navigation }) => {
     }
   }
 
-  const updateRows = async (songToUpdate, name, artist, image, gu) => {
+  const updateRows = async (songToUpdate, name, artist, image, color, gu) => {
     try {
       const columns = [];
       const values = [];
@@ -223,6 +223,12 @@ const Songs = ({ navigation }) => {
       columns.push('PICTURE = ?');
       values.push(!!image ? image : null);
       newUpdateRow.PICTURE = !!image ? image : null;
+
+      if (!!color) {
+        columns.push('COLOR = ?');
+        values.push(color);
+        newUpdateRow.COLOR = color;
+      }
 
       values.push(gu);
       console.log(columns);
@@ -361,7 +367,7 @@ const Songs = ({ navigation }) => {
           <View style={{ height: 0 }} />
         )}
       >
-        <EditInfo ref={songEditRef} song={curSongForSettings} />
+        <EditInfo ref={songEditRef} song={curSongForSettings} shuffle={shuffle} />
       </BottomSheetModal>
     </SafeAreaView >
   );

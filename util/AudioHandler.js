@@ -31,6 +31,7 @@ export default class AudioHandler {
             this.listeners = [] //listener objects that can have functions on them to update ui
 
             this.justDeleted = false;
+            this.queueJustEnded = false;
 
         } catch (error) {
             console.log("Error initializing AudioHandler: ", error);
@@ -81,6 +82,7 @@ export default class AudioHandler {
             this.next = this.cur;
             this.cur = this.prev;
 
+            let tempRow = this.nextRow;
             this.nextRow = this.curRow;
             this.curRow = this.prevRow;
 
@@ -93,9 +95,11 @@ export default class AudioHandler {
                 });
             }
 
-            if (this.queue.length === 0) {
+            if (this.queueJustEnded) {
                 await this.next.unloadAsync();
-                await this.next.loadAsync({ uri: this.nextRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 })
+                await this.next.loadAsync({ uri: tempRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 });
+                this.nextRow = tempRow;
+                this.queueJustEnded = false;
             }
 
             this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);
@@ -140,12 +144,16 @@ export default class AudioHandler {
 
                 if (this.listeners) {
                     this.listeners.forEach(item => {
-                        item.update(this.queue[0]);
+                        item.update(this.songs.find(item => item.SONG_GU === this.queue[0].SONG_GU) ?? this.queue[0]);
                         item.updateIsPlaying(true);
                     });
                 }
 
                 this.queue.shift();
+
+                if (this.queue.length === 0) {
+                    this.queueJustEnded = true;
+                }
 
                 this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);
 
@@ -171,9 +179,10 @@ export default class AudioHandler {
                 });
             }
 
-            if (this.queue.length === 0) {
+            if (this.queueJustEnded) {
                 await this.prev.unloadAsync();
                 await this.prev.loadAsync({ uri: this.prevRow.FILE_PATH }, { shouldPlay: false, progressUpdateIntervalMillis: 100 })
+                this.queueJustEnded = false;
             }
 
             this.cur.setOnPlaybackStatusUpdate(this.playNextWhenDone);
@@ -215,7 +224,7 @@ export default class AudioHandler {
 
     setCurNextPrev = async (cur, songs, fromFooter = false) => {
         try {
-            if (this.cur._loaded && this.curRow.SONG_GU === cur.SONG_GU && !fromFooter) {
+            if (this.cur._loaded && this.curRow.SONG_GU === cur.SONG_GU && !fromFooter && this.queueJustEnded) {
                 return;
             }
 

@@ -29,26 +29,11 @@ const SongComponent = forwardRef((props, ref) => {
   const swipeRef = useRef(null);
   const [background, setBackground] = useState(false);
 
-  const height = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+  const height = useRef(new Animated.Value(70)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     emitter.addListener(`delete_${item.SONG_GU}`, deleteAnim);
-
-    Animated.timing(
-      height, {
-      toValue: 70,
-      duration: 250,
-      easing: Easing.inOut(Easing.quad),
-      useNativeDriver: false,
-    }).start();
-    Animated.timing(
-      opacity, {
-      toValue: 1,
-      duration: 250,
-      easing: Easing.inOut(Easing.quad),
-      useNativeDriver: false,
-    }).start();
 
     return () => { emitter.removeListener(`delete_${item.SONG_GU}`, deleteAnim) }
   }, []);

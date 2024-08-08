@@ -1,10 +1,25 @@
+//<Imports>
+
+//React
 import React, { createContext, useRef } from 'react';
 import { Text, TouchableOpacity } from 'react-native';
-import AudioHandler from './AudioHandler';
-import SettingsHandler from './SettingsHandler';
 import { createNotifications, ZoomInDownZoomOutDown, FadeInFadeOut, AnimationBuilder, useNotificationController } from 'react-native-notificated';
 import { interpolate } from 'react-native-reanimated';
+import { Buffer } from 'buffer';
+import { kmeans } from 'ml-kmeans';
+import * as math from 'mathjs';
+import { decode } from 'base64-arraybuffer';
 
+
+//Expo
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system';
+
+//Internal
+import AudioHandler from './AudioHandler';
+import SettingsHandler from './SettingsHandler';
+
+//</Imports>
 
 // Create a Context
 const Context = createContext();
@@ -39,14 +54,14 @@ export const { NotificationsProvider, notify, ...events } = createNotifications(
         const { remove } = useNotificationController();
 
         return (
-          <TouchableOpacity activeOpacity={1} style={{ height: 50, width: '100%', borderRadius: 10, backgroundColor: 'white', bottom: bottom, justifyContent: 'center', }} onPress={() => { remove() }}>
+          <TouchableOpacity activeOpacity={1} style={{ height: 50, width: '100%', borderRadius: 10, backgroundColor: 'white', bottom: bottom, justifyContent: 'center', zIndex: 0 }} onPress={() => { remove() }}>
             <Text style={{ color: 'black', textAlign: 'left', textAlignVertical: 'center', marginStart: 20 }}>{text}</Text>
           </TouchableOpacity>
         )
       },
     }
   },
-})
+});
 
 // Create a Provider Component
 const ContextProvider = ({ children }) => {

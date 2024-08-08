@@ -13,7 +13,7 @@ import { FontAwesome6, Entypo } from '@expo/vector-icons';
 import * as SQLite from 'expo-sqlite';
 
 //Internal
-import { Context } from '../../util/ContextProvider';
+import { Context, getAverageColor, getBestColor } from '../../util/ContextProvider';
 import { FOOTER_SETTINGS_KEY } from '../../util/SettingsHandler';
 
 //</Imports>
@@ -27,7 +27,8 @@ const CurrentSongFooter = () => {
     const [curSong, setCurSong] = useState('');
     const [progress, setProgress] = useState(0);
     const [isPlaying, setIsPlaying] = useState(true);
-    const [long, setLong] = useState('#005982');
+    const [long, setLong] = useState('#393939');
+    const [domColor, setDomColor] = useState('#393939');
 
     const [songs, setSongs] = useState([]);
     //later for order of songs and stuff
@@ -82,8 +83,12 @@ const CurrentSongFooter = () => {
                 setCurDuration(status.durationMillis);
             }
             getDuration();
+            console.log(curSong.COLOR);
+            setDomColor(curSong.COLOR);
+            setLong(curSong.COLOR);
         }
     }, [curSong]);
+
 
     useEffect(() => {
         if (openSoundbar) {
@@ -240,10 +245,10 @@ const CurrentSongFooter = () => {
             </Animated.View>
             <TouchableOpacity
                 activeOpacity={1}
-                onLongPress={() => { setLong('#005982'); setOpenSoundbar(!openSoundbar); }}
+                onLongPress={() => { setLong(domColor); setOpenSoundbar(!openSoundbar); }}
                 onPress={() => console.log(curSong)}
                 onPressIn={() => { setLong('#0b0b0b') }}
-                onPressOut={() => { setLong('#005982') }}
+                onPressOut={() => { setLong(domColor) }}
                 style={[styles.button, { backgroundColor: long }]}
             >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -352,5 +357,10 @@ const styles = StyleSheet.create({
     time: {
         color: '#b8b8b8',
 
+    },
+    hiddenCanvas: {
+        position: 'absolute',
+        width: 0,
+        height: 0,
     },
 })

@@ -44,6 +44,7 @@ export default function Settings() {
         try {
             setData = async () => {
                 await sh.updateFooterSettings(footerSettings);
+                sh.footerSettings = footerSettings;
             }
             setData();
         } catch (error) {
